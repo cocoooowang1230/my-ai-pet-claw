@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#254c40"><title>My AI Pad · 把一點幸運帶回家</title><style>
+:root{--ink:#254c40;--muted:#7b8981;--paper:#f7f8f2;--green:#bce887;--line:#dfe5d9;--purple:#d9d2ed;--white:#fffefa;--shadow:0 14px 50px #294a3b09}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 "Segoe UI","Microsoft JhengHei",system-ui,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer;color:inherit;border:1px solid var(--line);background:var(--white);border-radius:12px;padding:10px 16px;transition:background .18s,transform .18s}
+button:hover:enabled{background:#eaf2df}button:active:enabled{transform:translateY(1px)}button:disabled{opacity:.48;cursor:not-allowed}button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #74916d;outline-offset:4px}
+a{color:inherit;text-decoration:none}p{margin:0 0 16px}h1,h2,h3{line-height:1.25;margin:0}small{font-size:12px}.muted{color:var(--muted)}.center{text-align:center}.wide{width:100%}.primary{background:var(--green);border-color:transparent;font-weight:700}.primary:hover:enabled{background:#acdc76}.eyebrow{font-size:11px;font-weight:750;letter-spacing:2px;text-transform:uppercase}.pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:100px;padding:6px 12px;font-size:11px;font-weight:600}.dot{width:6px;height:6px;display:inline-block;background:#8ba963;border-radius:50%}
+header{height:84px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 max(5%,calc((100vw - 1320px)/2));gap:24px}
+.logo{display:flex;align-items:center;gap:11px;white-space:nowrap;font-size:16px;font-weight:800;letter-spacing:1px}.logo-icon{display:grid;place-items:center;background:var(--ink);color:var(--green);height:33px;width:33px;border-radius:11px;font-size:18px}.logo small{font-size:9px;display:block;font-weight:600;letter-spacing:2px;line-height:1.4}
+header nav{display:flex;gap:28px;font-size:12px;color:var(--muted)}header nav a:first-child{color:var(--ink);font-weight:700}header .header-actions{display:flex;gap:9px;align-items:center}.header-actions button{font-size:12px;padding:8px 13px}
+main{max-width:1320px;margin:auto;padding:46px 40px 30px}.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:22px;margin-bottom:28px}.hero h1{font-size:clamp(30px,3.7vw,48px);font-weight:650;letter-spacing:-1.5px;margin-top:14px}.hero h1 em{font-style:normal;color:#8eab79}.hero p{margin:12px 0 0;font-size:13px;color:var(--muted)}.hero-note{max-width:210px;text-align:right;font-size:11px;color:var(--muted)}.hero-note strong{display:block;color:var(--ink);font-size:24px;letter-spacing:3px;font-weight:400}.hero-note .pill{margin-top:12px}
+.game-layout{display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:22px;align-items:start}.machine{border:1px solid var(--line);border-radius:25px;background:#edf1e8;overflow:hidden;position:relative;box-shadow:var(--shadow)}.machine-top{display:flex;align-items:center;justify-content:space-between;position:absolute;top:22px;left:24px;right:24px;z-index:2}.machine-top .eyebrow{font-size:10px;letter-spacing:1.6px}.machine-top .pill{background:#ffffffad;backdrop-filter:blur(6px)}.machine-top .strong{background:var(--green);border-color:#aacb87}.canvas-wrap{height:595px;position:relative}canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}canvas:active{cursor:grabbing}.scene-label{position:absolute;left:24px;bottom:20px;pointer-events:none;background:#fffefaeb;border:1px solid #dee7d8;border-radius:11px;padding:8px 13px;font-size:11px;color:var(--muted)}.scene-label.locked{color:#4f7b35;background:#eff8e6}
+.scene-hint{position:absolute;right:24px;bottom:21px;font-size:10px;color:var(--muted);pointer-events:none}.views{padding:15px 22px;display:flex;align-items:center;gap:8px;background:#ffffff96;border-top:1px solid var(--line)}.views>span{font-size:11px;color:var(--muted);margin-right:auto}.views button{border-radius:8px;border-color:transparent;background:transparent;font-size:11px;padding:6px 11px}.views button.active{background:var(--ink);color:#fff}
+.panel{border:1px solid var(--line);border-radius:25px;background:var(--white);padding:25px;box-shadow:var(--shadow)}.panel-top{display:flex;align-items:center;justify-content:space-between}.panel-top .eyebrow{font-size:10px}.tiny-button{font-size:11px;padding:5px 9px;border-radius:8px}.wallet{display:flex;align-items:baseline;gap:9px;margin:9px 0 1px}.wallet strong{font-size:40px;line-height:1.3;letter-spacing:-1px;font-weight:550}.wallet span{font-size:11px;color:var(--muted)}.wallet-meta{font-size:11px;color:var(--muted);margin-bottom:22px}.wallet-meta b{font-weight:600;color:var(--ink)}
+.section-rule{border-top:1px solid var(--line);padding-top:20px;margin-top:20px}.progress-head{display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-bottom:9px}.progress-head strong{font-size:12px}.track{height:7px;border-radius:20px;background:#edf0e5;overflow:hidden}.track>div{height:100%;width:0;border-radius:20px;background:#a9d978;transition:width .4s}.progress-note{font-size:10px;color:var(--muted);margin:9px 0 0}
+.selector-label{font-size:11px;font-weight:700;margin:22px 0 10px}.modes{display:flex;gap:8px}.modes button{flex:1;font-size:12px;border-radius:10px;padding:10px 4px}.modes button.active{background:#ecf4e3;border-color:#aeca94}.mode-icon{display:block;font-size:20px;margin-bottom:2px}
+.controls-title{display:flex;justify-content:space-between;align-items:center;font-size:11px}.controls-title span{color:var(--muted);font-size:10px}.control-area{display:flex;align-items:center;justify-content:center;gap:20px;margin:14px 0 16px;min-height:130px}#joystick{touch-action:none;width:116px;height:116px;border-radius:50%;background:radial-gradient(circle,#e1e8d9 0 33%,#f1f3eb 34% 65%,#dbe2d5 66% 67%,#f4f5ee 68%);display:grid;place-items:center;box-shadow:inset 0 2px 8px #294a3b08;position:relative;user-select:none}#knob{width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 38% 30%,#a8c1a1,#718e73);box-shadow:0 8px 0 #58745e,0 12px 15px #254c4024;pointer-events:none}.joy-hint{position:absolute;bottom:5px;font-size:7px;color:#8d9b85;letter-spacing:1px;pointer-events:none}.dpad{display:grid;grid-template-columns:30px 30px 30px;grid-template-rows:30px 30px 30px;gap:3px}.dpad button{padding:0;border-radius:8px;touch-action:none;user-select:none;font-size:12px}.dpad [data-dir=up]{grid-area:1/2}.dpad [data-dir=left]{grid-area:2/1}.dpad [data-dir=right]{grid-area:2/3}.dpad [data-dir=down]{grid-area:3/2}.dpad span{grid-area:2/2;text-align:center;color:#a4b297;font-size:17px}#drop{width:100%;border-radius:14px;background:var(--ink);color:#f1ffdb;border:0;font-size:20px;font-weight:600;padding:13px;box-shadow:0 4px 0 #16382e}#drop:hover:enabled{background:#35624f}#drop:disabled{box-shadow:none}.drop-meta{display:flex;justify-content:space-between;font-size:10px;margin-top:11px;color:var(--muted)}kbd{font-family:inherit;border:1px solid var(--line);border-radius:4px;padding:0 4px;background:#f6f7f0}.status-row{display:flex;align-items:center;justify-content:space-between;padding:17px 5px 0;font-size:11px;gap:10px;color:var(--muted)}.status-row button{font-size:10px;padding:4px 9px}.settings{margin-top:18px;padding-top:15px;border-top:1px solid var(--line);font-size:11px}.settings summary{cursor:pointer;color:var(--muted)}.settings label{display:flex;gap:6px;margin:12px 0 6px;align-items:center}.settings input{accent-color:#749453}.settings p{font-size:10px;margin:0 0 10px;color:var(--muted)}.settings button{font-size:10px;padding:5px 8px;margin:4px 3px 0 0}
+.prizes{margin-top:36px}.prize-heading{display:flex;justify-content:space-between;align-items:end;margin-bottom:17px}.prize-heading h2{font-size:19px;font-weight:650;margin-top:6px}.prize-heading>span{font-size:11px;color:var(--muted)}.prize-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px}.prize-tile{border:1px solid var(--line);border-radius:18px;background:var(--white);display:flex;align-items:center;gap:13px;padding:14px 16px;min-height:130px}.prize-art{width:91px;flex:0 0 91px;align-self:center}.prize-art svg{display:block;width:100%;height:auto}.prize-tile h3{font-size:13px;margin-bottom:6px}.prize-tile p{font-size:10px;color:var(--muted);margin:0}.prize-tile small{font-size:9px;display:inline-block;margin-top:9px;background:#edf2e5;padding:2px 7px;border-radius:5px}.capsule-small{width:71px;height:71px;margin:10px;border-radius:50%;background:linear-gradient(160deg,#eff9e4,#c4dcab 50%,#c3b6df 51%,#eee8f6);box-shadow:inset -6px -7px 10px #6f697a21,0 9px 20px #3853360e;display:grid;place-items:center;font-size:22px;color:#ffffffc9;font-weight:600}
+footer{display:flex;align-items:start;justify-content:space-between;gap:30px;margin-top:35px;padding-top:22px;border-top:1px solid var(--line);font-size:10px;color:var(--muted)}footer p{max-width:710px}footer .brand{font-size:11px;letter-spacing:1px;color:var(--ink);white-space:nowrap}
+dialog{border:1px solid var(--line);border-radius:24px;padding:27px;max-width:470px;width:calc(100% - 32px);color:var(--ink);background:var(--white);box-shadow:0 25px 100px #132d3340;max-height:85vh}dialog::backdrop{background:#142e3255;backdrop-filter:blur(5px)}.modal-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.modal-head h2{font-size:20px}.modal-head button{border:0;background:#eef1e7;padding:2px 10px;font-size:24px;border-radius:50%}#modalContent>p{font-size:13px}#modalContent label{display:block;font-size:12px;margin-bottom:14px}#modalContent input,#modalContent textarea{display:block;width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:5px;padding:10px;color:var(--ink)}.reward-art{width:170px;margin:5px auto 20px;animation:pop .6s ease}.reward-art svg{width:100%;display:block}.rules{padding-left:20px;font-size:12px;line-height:1.85}.rules li{margin:12px 0}.award-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-height:50vh;overflow:auto}.award-card{display:flex;flex-direction:column;align-items:center;padding:12px 7px}.award-card svg{width:80px}.award-card span{font-size:11px}.award-card small{font-size:9px;color:var(--muted);margin-top:4px}.capsule-reveal{width:130px;height:130px;margin:22px auto;border-radius:50%;background:linear-gradient(#c5e9ab 0 49%,#adcca0 50%,#cec2e8 51%);display:grid;place-items:center;font-size:44px;color:#fff;box-shadow:inset -12px -10px 15px #3f3c6522;animation:float 2s ease-in-out infinite}
+#toast{position:fixed;bottom:25px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#284c40;color:white;border-radius:12px;padding:12px 20px;z-index:10;font-size:13px;box-shadow:0 10px 30px #0002;transition:.25s;max-width:calc(100% - 32px);text-align:center}#toast.show{opacity:1;transform:translate(-50%,0)}.noscript{padding:20px;background:#fff0cc;color:#624717}
+@keyframes pop{from{opacity:0;transform:scale(.7) rotate(-8deg)}to{opacity:1;transform:scale(1)}}@keyframes float{50%{transform:translateY(-8px) rotate(5deg)}}
+@media(min-width:1500px){.canvas-wrap{height:620px}}@media(max-width:1000px){main{padding:30px 24px}header{padding:0 24px}header nav{display:none}.game-layout{grid-template-columns:minmax(0,1fr) 295px;gap:16px}.panel{padding:21px}.canvas-wrap{height:590px}.prize-tile{padding:12px;gap:5px}.prize-art{flex-basis:66px;width:66px}.capsule-small{height:58px;width:58px;margin:4px}.scene-hint{display:none}}
+@media(max-width:760px){header{height:69px;padding:0 18px}.logo{font-size:13px}.logo small{font-size:8px}.header-actions button{font-size:11px;padding:7px 9px}main{padding:29px 16px}.hero{margin-bottom:23px}.hero h1{font-size:33px}.hero-note{display:none}.hero p{font-size:12px}.game-layout{display:block}.canvas-wrap{height:460px}.machine-top{left:18px;right:18px;top:18px}.views{padding:12px;gap:3px}.views button{padding:6px 10px}.panel{margin-top:16px;padding:22px}.wallet{margin:5px 0 0}.wallet strong{font-size:34px}.wallet-meta{margin-bottom:0}.section-rule{margin-top:15px;padding-top:15px}.selector-label{margin-top:16px}.control-area{min-height:119px;margin:8px 0 16px;gap:46px}#drop{font-size:20px}.settings{margin-top:14px}.prizes{margin-top:28px}.prize-grid{grid-template-columns:1fr}.prize-tile{padding:12px 20px;gap:22px;min-height:105px}.prize-art{width:80px;flex-basis:80px}.prize-tile h3{font-size:14px}.prize-tile p{font-size:11px}.prize-heading>span{display:none}footer{display:block}.status-row{padding-top:13px}.scene-label{left:14px;bottom:14px;font-size:10px}.prize-tile small{margin-top:5px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head>
+<body>
+<header><a href="#" class="logo" aria-label="My AI Pad 首頁"><span class="logo-icon">⌘</span><span>MY AI PAD<small>THE CLAW CLUB</small></span></a><nav aria-label="頁面導覽"><a href="#play">開始抓娃娃</a><a href="#prizes">本季獎品</a></nav><div class="header-actions"><button id="rules">玩法說明</button><button id="collection">我的收藏 <b id="collectionCount">0</b></button></div></header>
+<main>
+<section class="hero"><div><span class="eyebrow">A LITTLE SKILL. A LITTLE LUCK.</span><h1>把一點幸運，<em>帶回家。</em></h1><p>移動、瞄準、下爪。你的下一個 AI 夥伴，就在這裡。</p></div><div class="hero-note"><strong>SEASON 01</strong>一台小機器，裝滿可愛的可能。<br><span class="pill"><span class="dot"></span>瀏覽器體驗版</span></div></section>
+<section class="game-layout" id="play" aria-label="夾娃娃遊戲">
+<div><div class="machine"><div class="machine-top"><span class="eyebrow" id="modeLabel">THE ORIGINALS</span><span class="pill" id="force">SOFT · 一般爪力</span></div><div class="canvas-wrap"><canvas id="scene" aria-label="3D 示意娃娃機。拖曳環視，透過右側或下方搖桿移動爪子。">你的瀏覽器需要支援 Canvas 才能顯示機台。</canvas><div class="scene-label" id="target" aria-live="polite">移動光圈，對準獎品</div><span class="scene-hint">拖曳環視 · 滾輪縮放</span></div><div class="views" aria-label="觀看角度"><span>VIEW</span><button data-view="front" aria-pressed="false">正面</button><button data-view="left" aria-pressed="false">左側</button><button data-view="right" aria-pressed="false">右側</button><button data-view="top" aria-pressed="false">俯視</button><button data-view="bottom" aria-pressed="false">仰視</button></div></div><div class="status-row"><span id="status" role="status">準備好，遇見你的 AI 夥伴</span><button id="sound" aria-pressed="false">音效：關</button></div></div>
+<aside class="panel" aria-label="遊戲控制">
+<div class="panel-top"><span class="eyebrow">YOUR PLAY WALLET</span><button class="tiny-button" id="topup">＋ 示範點數</button></div><div class="wallet"><strong id="balance">300</strong><span>DEMO CREDITS</span></div><div class="wallet-meta"><b id="points">0</b> season points <span aria-hidden="true">·</span> 已玩 <b id="plays">0</b> 次</div>
+<div class="section-rule"><div class="progress-head"><strong>150 強爪保夾</strong><span id="progressText">0 / 150 credits</span></div><div class="track" aria-hidden="true"><div id="progress"></div></div><p class="progress-note" id="remaining">再花 150 credits，啟動持續強爪</p></div>
+<div class="selector-label">今天，想抓什麼？</div><div class="modes"><button data-mode="plush" class="active" aria-pressed="true"><span class="mode-icon" aria-hidden="true">▣</span>玩偶＋金券</button><button data-mode="balls" aria-pressed="false"><span class="mode-icon" aria-hidden="true">◒</span>驚喜球</button></div>
+<div class="section-rule"><div class="controls-title"><strong>移動搖桿</strong><span>也可使用 WASD ／方向鍵</span></div><div class="control-area"><div id="joystick" aria-label="拖曳搖桿控制爪子"><div id="knob"></div><span class="joy-hint">MOVE ME</span></div><div class="dpad" aria-label="方向按鍵"><button data-dir="up" aria-label="向前移動">↑</button><button data-dir="left" aria-label="向左移動">←</button><span aria-hidden="true">·</span><button data-dir="right" aria-label="向右移動">→</button><button data-dir="down" aria-label="向後移動">↓</button></div></div><button id="drop">下爪</button><div class="drop-meta"><span id="cost">10 credits / 次</span><span><kbd>Space</kbd> 下爪</span></div></div>
+<details class="settings"><summary>原型示範設定</summary><p style="margin-top:12px">累計 150 credits 後免費重試，持續強爪直到成功夾中。中獎後歸零，下一局重新扣 credits。</p><button id="testStrong">載入累計 140 credits 情境</button><button id="reset">重新開始示範</button></details>
+</aside></section>
+<section class="prizes" id="prizes"><div class="prize-heading"><div><span class="eyebrow">MEET YOUR NEXT LITTLE JOY</span><h2>這一季的小驚喜</h2></div><span>每一個獎品，都值得你伸出爪子。</span></div><div class="prize-grid"><article class="prize-tile"><div class="prize-art" id="previewPlush"></div><div><h3>My AI Pad 玩偶</h3><p>帶一位柔軟的 AI 夥伴回家。</p><small>實體獎品流程示範</small></div></article><article class="prize-tile"><div class="prize-art" id="previewGold"></div><div><h3>金色積分券</h3><p>開出 500 season points。</p><small>虛擬獎勵示範</small></div></article><article class="prize-tile"><div class="prize-art"><div class="capsule-small">?</div></div><div><h3>驚喜球</h3><p>打開才知道，是夥伴還是金券。</p><small>切換球模式體驗</small></div></article></div></section>
+<footer><span class="brand">MY AI PAD · PLAY A LITTLE.</span><div><p>此頁為本機遊戲原型。Credits、season points、收藏與領獎皆為示範；不含實際收費、兌換或寄送。玩偶造型為暫用示意。進度儲存在目前瀏覽器，領獎地址不保存、不傳送。</p><p id="storageNote"></p></div></footer>
+</main>
+<dialog id="modal" aria-labelledby="modalTitle"><div class="modal-head"><h2 id="modalTitle"></h2><button id="closeModal" aria-label="關閉視窗">×</button></div><div id="modalContent"></div></dialog><div id="toast" role="status"></div><noscript><p class="noscript">請在瀏覽器啟用 JavaScript 以操作遊戲。</p></noscript>
+<script>function resolvePlay(s,kind,roll,id,aligned){
+  const cost=s.roundSpend>=150?0:10;
+  if(s.credits<cost)return null;
+  const next=JSON.parse(JSON.stringify(s));
+  next.credits-=cost;next.plays++;next.roundSpend+=cost;
+  const strong=next.roundSpend>=150;
+  const won=aligned&&(strong||roll<0.1);
+  let award=null;
+  if(won){
+    award={id,type:kind,claimed:false};
+    next.awards.unshift(award);
+    if(kind==='gold')next.points+=500;
+    next.roundSpend=0;next.pending=id;
+  }
+  return {state:next,award,strong,cost,aligned};
+}
+
+const $=s=>document.querySelector(s);
+const KEY='my-ai-pad-claw-v2';
+const fresh=()=>({credits:300,plays:0,roundSpend:0,points:0,awards:[],pending:null});
+let state=fresh(), mode='plush', busy=false, anim=null, last=performance.now(), soundOn=false;
+try{const saved=JSON.parse(localStorage.getItem(KEY));if(saved&&Number.isSafeInteger(saved.credits)&&saved.credits>=0&&Number.isSafeInteger(saved.roundSpend)&&saved.roundSpend>=0&&Number.isSafeInteger(saved.plays)&&saved.plays>=0&&Number.isSafeInteger(saved.points)&&saved.points>=0&&Array.isArray(saved.awards)){state=saved;state.awards=state.awards.filter(a=>a&&typeof a.id==='string'&&['plush','gold'].includes(a.type));}}catch{}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch{$('#storageNote').textContent='此瀏覽器無法儲存紀錄，關閉頁面後進度將消失。';}update();}
+function update(){
+ $('#balance').textContent=state.credits.toLocaleString();
+ $('#points').textContent=state.points.toLocaleString();
+ $('#collectionCount').textContent=state.awards.length;
+ const shownSpend=busy&&anim?anim.roundSpend:state.roundSpend;
+ const strong=busy&&anim?anim.strong:state.roundSpend>=150, cost=strong?0:10;
+ $('#progressText').textContent=strong?'強爪已啟動':Math.min(shownSpend,150)+' / 150 credits';
+ $('#progress').style.width=Math.min(shownSpend/150*100,100)+'%';
+ $('#remaining').textContent=strong?'持續強爪，直到成功夾中。':'再花 '+(150-shownSpend)+' credits，啟動持續強爪';
+ $('#force').textContent=strong?'STRONG · 強爪':'SOFT · 一般爪力';
+ $('#force').classList.toggle('strong',strong);
+ $('#cost').textContent=cost===0?'強爪免費重試':cost+' credits / 次';
+ $('#plays').textContent=state.plays;
+ $('#drop').disabled=busy||state.credits<cost;
+ document.querySelectorAll('[data-mode],#collection,#reset,#testStrong').forEach(b=>b.disabled=busy);
+ $('#drop').textContent=busy?'抓取中…':state.credits<cost?'Credits 不足':'下爪';
+}
+let toastTimer;function toast(t){$('#toast').textContent=t;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3500);}
+let audio;function beep(win=false){if(!soundOn)return;try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.connect(g);g.connect(audio.destination);o.frequency.setValueAtTime(win?660:240,audio.currentTime);o.frequency.exponentialRampToValueAtTime(win?1100:120,audio.currentTime+.16);g.gain.setValueAtTime(.035,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.22);o.start();o.stop(audio.currentTime+.23);}catch{}}
+const mascot='<svg viewBox="0 0 160 150" aria-hidden="true"><ellipse cx="80" cy="137" rx="46" ry="7" fill="#255548" opacity=".1"/><rect x="35" y="25" width="90" height="102" rx="29" fill="#bbee91"/><rect x="44" y="34" width="72" height="68" rx="20" fill="#244e43"/><path d="M61 59v12m38-12v12" stroke="#eaffbf" stroke-width="8" stroke-linecap="round"/><path d="M70 84q10 9 20 0" fill="none" stroke="#eaffbf" stroke-width="4" stroke-linecap="round"/><circle cx="80" cy="114" r="5" fill="#77a966"/><path d="M35 80L21 98m104-18 14 18M57 126v10m46-10v10" stroke="#bbee91" stroke-width="15" stroke-linecap="round"/></svg>';
+const ticket='<svg viewBox="0 0 160 150" aria-hidden="true"><g transform="rotate(-12 80 75)"><rect x="19" y="36" width="122" height="80" rx="12" fill="#edc860"/><rect x="26" y="43" width="108" height="66" rx="8" fill="none" stroke="#fff3bf" stroke-width="2" stroke-dasharray="5 4"/><text x="80" y="75" font-size="26" font-weight="800" text-anchor="middle" fill="#775722">+500</text><text x="80" y="96" font-size="10" text-anchor="middle" fill="#775722">SEASON POINTS</text></g></svg>';
+$('#previewPlush').innerHTML=mascot;$('#previewGold').innerHTML=ticket;
+const dialog=$('#modal'),content=$('#modalContent');
+function show(title,html){$('#modalTitle').textContent=title;content.innerHTML=html;if(!dialog.open)dialog.showModal();move.x=move.z=0;keys.clear();}
+$('#closeModal').onclick=()=>dialog.close();
+dialog.addEventListener('close',()=>{content.replaceChildren();state.pending=null;save();});
+function awardScreen(a,capsule=false){
+ if(capsule){show('你的驚喜球到了！','<div class="capsule-reveal"><span>?</span></div><p class="center muted">打開它，看看今天遇見誰。</p><button class="primary wide" id="reveal">打開驚喜球</button>');$('#reveal').onclick=()=>awardScreen(a,false);return;}
+ show(a.type==='plush'?'新的 AI 夥伴，準備回家。':'金色的幸運，屬於你。','<div class="reward-art">'+(a.type==='plush'?mascot:ticket)+'</div><p class="center">'+(a.type==='plush'?'My AI Pad 原創玩偶':'500 Season Points 已加入示範帳戶')+'</p><p class="center muted">已放入「我的收藏」</p><button class="primary wide" id="awardAction">'+(a.type==='plush'&&!a.claimed?'體驗填寫領獎資料':'收進收藏')+'</button>');
+ $('#awardAction').onclick=()=>{if(a.type==='plush'&&!a.claimed)shipping(a);else dialog.close();};
+}
+function shipping(a){
+ show('讓 AI 夥伴找到你','<p class="muted">領獎流程示範。資料不會傳送或儲存，請使用測試資料。</p><form id="shipForm"><label>收件人<input name="recipient" required maxlength="40" placeholder="測試收件人" autocomplete="off"></label><label>聯絡電話<input name="phone" required maxlength="30" type="tel" placeholder="測試電話" autocomplete="off"></label><label>收件地址<textarea name="address" required maxlength="200" placeholder="測試地址" autocomplete="off"></textarea></label><button class="primary wide" type="submit">完成示範領獎</button></form>');
+ $('#shipForm').onsubmit=e=>{e.preventDefault();a.claimed=true;save();show('示範領獎完成','<div class="reward-art">'+mascot+'</div><p>表單資料已清除，沒有送出訂單或安排實際出貨。</p><button id="done" class="primary wide">回到遊戲</button>');$('#done').onclick=()=>dialog.close();};
+}
+$('#collection').onclick=()=>{show('我的收藏','<p class="muted">已獲得 '+state.awards.length+' 個獎品 · '+state.points+' season points</p><div id="awardList" class="award-list"></div>');if(!state.awards.length){$('#awardList').innerHTML='<p>第一個 AI 夥伴，正等著你帶回家。</p>';return;}state.awards.forEach(a=>{let b=document.createElement('button');b.className='award-card';b.innerHTML=(a.type==='plush'?mascot:ticket)+'<span>'+(a.type==='plush'?'My AI Pad 玩偶':'500 Season Points')+'</span><small>'+(a.type==='gold'?'積分已入帳':a.claimed?'領獎流程已體驗':'點擊體驗領獎')+'</small>';b.onclick=()=>awardScreen(a);$('#awardList').append(b);});};
+$('#rules').onclick=()=>show('玩法與示範設定','<ol class="rules"><li>每次下爪花 10 示範 credits。搖桿、方向鍵或 WASD 移動爪子，空白鍵或「下爪」開始。方向會跟著觀看角度變化。</li><li>拖曳機台畫面可以環視，滾輪縮放。請把爪子下方光圈移到獎品中心；沒有瞄準會抓空。</li><li>一般爪力：瞄準後有 10% 機率成功帶回獎品。獨立機率，10 次不代表必定中 1 次；抓空不會中獎。</li><li>本輪累計花到 150 credits，從達標那次起增強爪力，之後持續到成功夾中。強爪仍需要瞄準；不會自動選取或直接發獎。</li><li>達標後不再扣 credits，可以免費重試並持續強爪，直到成功夾中。獲得玩偶或金券後，累計歸零並恢復一般爪力，下一局重新扣 credits。</li><li>驚喜球可開出玩偶或金券；金券提供 500 示範 season points。切換展示模式不會清除保夾進度。</li><li>這是本機體驗版：Credits、積分、收藏皆為示範資料；沒有付款、兌換或實際出貨。領獎表單不會保存或傳送個人資料。玩偶造型為暫用示意。</li></ol>');
+$('#topup').onclick=()=>{if(state.credits<=1000000){state.credits+=300;save();toast('已加入 300 示範 credits');}};
+$('#sound').onclick=()=>{soundOn=!soundOn;$('#sound').textContent=soundOn?'音效：開':'音效：關';$('#sound').setAttribute('aria-pressed',String(soundOn));beep(true);};
+$('#testStrong').onclick=()=>{if(busy)return;state.roundSpend=140;state.credits=Math.max(state.credits,10);save();toast('已載入累計 140 credits 的示範情境');};
+$('#reset').onclick=()=>{
+ if(busy)return;
+ show('重新開始示範？','<p>這會清除本機示範收藏、積分與保夾進度，並恢復 300 示範 credits。</p><button class="primary wide" id="resetConfirm">確認重新開始</button>');
+ $('#resetConfirm').onclick=()=>{state=fresh();save();dialog.close();toast('已重新開始');};
+};
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(busy)return;mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});$('#modeLabel').textContent=mode==='plush'?'THE ORIGINALS':'SURPRISE CAPSULES';});
+const canvas=$('#scene'),ctx=canvas.getContext('2d');
+let W=1,H=1,DPR=1,angle=-.38,elevation=.2,distance=8.6,pos={x:0,z:0},move={x:0,z:0},keys=new Set(),orbit=null;
+const colors=['#bae999','#dabfec','#f7cf92','#a8dcd7'];
+const toys=Array.from({length:12},(_,i)=>({x:-1.2+(i%4)*.8,z:-.85+Math.floor(i/4)*.79,y:.62,color:colors[i%4],gold:i===3||i===8}));
+function resize(){const r=canvas.getBoundingClientRect();W=r.width;H=r.height;DPR=Math.min(devicePixelRatio||1,2);canvas.width=W*DPR;canvas.height=H*DPR;}
+new ResizeObserver(resize).observe(canvas);
+function project(x,y,z){const ca=Math.cos(angle),sa=Math.sin(angle),ce=Math.cos(elevation),se=Math.sin(elevation),dy=y-2.03,depth=distance-(dy*se+(x*sa+z*ca)*ce),f=Math.min(W*1.6,H*1.46);return{x:W/2+(x*ca-z*sa)*f/depth,y:H*.5-(dy*ce-(x*sa+z*ca)*se)*f/depth,s:f/depth,d:depth};}
+function nearest(plushOnly=false){let best=0,min=Infinity;toys.forEach((t,i)=>{if(plushOnly&&mode==='plush'&&t.gold)return;const d=(t.x-pos.x)**2+(t.z-pos.z)**2;if(d<min){min=d;best=i;}});return best;}
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),mix=(a,b,t)=>a+(b-a)*clamp(t,0,1),ease=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
+let drawList=[];
+function poly(points,fill,stroke){const ps=points.map(p=>project(...p));drawList.push({d:ps.reduce((a,p)=>a+p.d,0)/ps.length,draw:()=>{ctx.beginPath();ps.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}}});}
+function line(points,color,width=2){const ps=points.map(p=>project(...p));drawList.push({d:ps.reduce((a,p)=>a+p.d,0)/ps.length-.005,draw:()=>{ctx.beginPath();ps.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle=color;ctx.lineWidth=width*ps[0].s/100;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();}});}
+function box(x,y,z,w,h,l,color){let a=x-w/2,b=x+w/2,c=y-h/2,d=y+h/2,e=z-l/2,f=z+l/2;poly([[a,c,e],[b,c,e],[b,d,e],[a,d,e]],color);poly([[a,c,f],[b,c,f],[b,d,f],[a,d,f]],color);poly([[a,c,e],[a,c,f],[a,d,f],[a,d,e]],color);poly([[b,c,e],[b,c,f],[b,d,f],[b,d,e]],color);poly([[a,d,e],[b,d,e],[b,d,f],[a,d,f]],color);poly([[a,c,e],[b,c,e],[b,c,f],[a,c,f]],color);}
+function round(x,y,w,h,r,fill){ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h);ctx.fillStyle=fill;ctx.fill();}
+function drawToy(t,x,y,z,rotation=0){
+ const p=project(x,y,z);drawList.push({d:p.d,draw:()=>{ctx.save();ctx.translate(p.x,p.y);ctx.scale(p.s/100,p.s/100);ctx.rotate(rotation);
+ if(mode==='balls'){let g=ctx.createRadialGradient(-10,-12,3,0,0,31);g.addColorStop(0,'#fff');g.addColorStop(.4,t.color);g.addColorStop(1,'#8cae92');ctx.beginPath();ctx.arc(0,0,29,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.beginPath();ctx.ellipse(0,1,28,7,0,0,Math.PI);ctx.strokeStyle='#fff9';ctx.lineWidth=3;ctx.stroke();round(-7,-6,14,13,5,'#ffffffbb');}
+ else if(t.gold){ctx.rotate(-.18);round(-33,-21,66,43,6,'#d8ac41');round(-30,-23,60,41,6,'#f1cf73');ctx.strokeStyle='#fff3bf';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.strokeRect(-25,-17,50,29);ctx.setLineDash([]);ctx.fillStyle='#7b602c';ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.fillText('+500',0,2);ctx.font='6px system-ui';ctx.fillText('SEASON POINTS',0,11);}
+ else{round(-26,-31,53,66,15,'#729779');round(-29,-34,53,65,15,t.color);round(-21,-27,38,40,11,'#274f45');round(-13,-16,5,10,3,'#eaffca');round(3,-16,5,10,3,'#eaffca');ctx.beginPath();ctx.arc(-2,0,7,.2,Math.PI-.2);ctx.strokeStyle='#eaffca';ctx.lineWidth=2;ctx.stroke();round(-36,3,11,20,6,t.color);round(23,3,11,20,6,t.color);round(-21,27,14,12,5,t.color);round(8,27,14,12,5,t.color);ctx.beginPath();ctx.arc(-2,22,3,0,Math.PI*2);ctx.fillStyle='#ffffff88';ctx.fill();}
+ ctx.restore();}});
+}
+function render(now){
+ const dt=Math.min((now-last)/1000,.04);last=now;
+ if(!busy&&!dialog.open){let mx=move.x+(keys.has('ArrowRight')||keys.has('d')?1:0)-(keys.has('ArrowLeft')||keys.has('a')?1:0),mz=move.z+(keys.has('ArrowDown')||keys.has('s')?1:0)-(keys.has('ArrowUp')||keys.has('w')?1:0),mag=Math.max(1,Math.hypot(mx,mz));mx/=mag;mz/=mag;pos.x=clamp(pos.x+(mx*Math.cos(angle)+mz*Math.sin(angle))*dt*1.45,-1.35,1.35);pos.z=clamp(pos.z+(-mx*Math.sin(angle)+mz*Math.cos(angle))*dt*1.45,-1.07,1.07);}
+ ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
+ const bg=ctx.createRadialGradient(W*.45,H*.43,10,W*.5,H*.5,H*.6);bg.addColorStop(0,'#fff');bg.addColorStop(1,'#e9eee4');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ ctx.fillStyle='#244e4310';ctx.beginPath();ctx.ellipse(W/2,H*.92,W*.29,18,0,0,7);ctx.fill();
+ drawList=[];
+ if(elevation>-.3)box(0,0,0,3.7,.45,3.1,'#86b79e');
+ poly([[-1.65,.24,-1.3],[1.65,.24,-1.3],[1.65,.24,1.3],[-1.65,.24,1.3]],elevation>-.3?'#e6e2ed':'#e6e2ed1a');
+ for(let x=-1.5;x<=1.5;x+=.5)line([[x,.25,-1.3],[x,.25,1.3]],'#d3cddd',.65);
+ for(let z=-1;z<=1;z+=.5)line([[-1.65,.25,z],[1.65,.25,z]],'#d3cddd',.65);
+ poly([[-1.7,.25,-1.4],[1.7,.25,-1.4],[1.7,4.25,-1.4],[-1.7,4.25,-1.4]],'#c7dfd00d','#a8c0b35e');
+ for(let x of[-1.7,1.7])poly([[x,.25,-1.4],[x,.25,1.4],[x,4.25,1.4],[x,4.25,-1.4]],'#dff2e20c','#adc5b355');
+ if(elevation<.9)box(0,4.39,0,3.7,.25,3.1,'#aacdaf');
+ for(let x of[-1.73,1.73])for(let z of[-1.43,1.43])line([[x,.2,z],[x,4.3,z]],'#93bfa0',10);
+ for(let z of[-1.43,1.43])line([[-1.73,4.26,z],[1.73,4.26,z]],'#e2f7cc',7);
+ poly([[-1.65,.265,.76],[-.79,.265,.76],[-.79,.265,1.3],[-1.65,.265,1.3]],'#254b42');
+ let selected=nearest(),cx=pos.x,cz=pos.z,cy=3.63,grip=1,t=anim?(now-anim.started)/1000:0;
+ if(anim){const target=toys[anim.index];cx=anim.from.x;cz=anim.from.z;
+ if(t<1.25)cy=mix(3.63,1.13,ease(t/1.25));
+ else if(t<1.8){cy=1.13;grip=1-ease((t-1.25)/.55);}
+ else if(t<3){cy=mix(1.13,3.63,ease((t-1.8)/1.2));grip=0;}
+ else{cy=3.63;grip=t>4.3?ease((t-4.3)/.35):0;if(anim.award){cx=mix(anim.from.x,-1.22,ease((t-3)/1.2));cz=mix(anim.from.z,1.07,ease((t-3)/1.2));}}
+ selected=anim.index;}
+ const target=toys[selected];const aligned=Math.hypot(target.x-pos.x,target.z-pos.z)<=.30;let ring=[];for(let i=0;i<=40;i++){let q=i/40*Math.PI*2;ring.push([pos.x+.30*Math.cos(q),.27,pos.z+.30*Math.sin(q)]);}line(ring,aligned?'#64a956':'#bca87c',2);line([[pos.x,3.07,pos.z],[pos.x,.28,pos.z]],'#6f9b6744',.75);
+ toys.forEach((toy,i)=>{let x=toy.x,y=toy.y,z=toy.z,r=0;if(anim&&anim.aligned&&i===anim.index&&t>1.65){if(anim.award){if(t<4.4){x=cx;y=cy-.43;z=cz;}else{x=-1.22;z=1.07;y=mix(3.2,-.5,ease((t-4.4)/.55));if(y<.2)return;}}else if(t<2.55){y=cy-.43;r=Math.sin(t*13)*.15;}else if(t<3.1){y=mix(2.4,toy.y,ease((t-2.55)/.5));r=Math.sin(t*12)*.2;}}drawToy(toy,x,y,z,r);});
+ line([[-1.55,4.12,cz],[1.55,4.12,cz]],'#597c70',5);box(cx,4.04,cz,.38,.18,.35,'#2e5548');line([[cx,4.03,cz],[cx,cy+.18,cz]],'#68897d',3);
+ for(let i=0;i<3;i++){let q=i*Math.PI*2/3,spread=.18+grip*.22;line([[cx,cy,cz],[cx+Math.cos(q)*.34,cy-.22,cz+Math.sin(q)*.34],[cx+Math.cos(q)*spread,cy-.51,cz+Math.sin(q)*spread]],'#648878',5);}
+ box(cx,cy+.03,cz,.3,.2,.3,'#a4c7b3');
+ drawList.sort((a,b)=>b.d-a.d).forEach(c=>c.draw());
+ const label=project(0,4.38,1.58);ctx.fillStyle='#315647';ctx.textAlign='center';ctx.font='800 '+Math.max(10,label.s*.13)+'px system-ui';ctx.fillText('MY AI PAD',label.x,label.y+4);
+ const gate=project(-1.22,.11,1.59);ctx.font='bold 9px system-ui';ctx.fillStyle='#e6f0dd';ctx.fillText('PRIZE OUT',gate.x,gate.y);
+ if(!busy){$('#target').textContent=!aligned?'移動光圈，對準獎品':mode==='balls'?'已瞄準：驚喜球':target.gold?'已瞄準：金色積分券':'已瞄準：My AI Pad 玩偶';$('#target').classList.toggle('locked',aligned);}
+ if(anim&&t>5.1){const result=anim;anim=null;busy=false;pos={x:0,z:0};$('#status').textContent='準備好，遇見你的 AI 夥伴';update();if(result.award){beep(true);awardScreen(result.award,mode==='balls');}else{beep();toast(!result.aligned?(result.strong?'抓空了！強爪持續中，對準獎品再試。':'抓空了，移動光圈對準獎品中心。'):'爪子鬆開了… 保夾消費已累積。');}}
+ requestAnimationFrame(render);
+}
+function drop(){
+ if(busy||dialog.open)return;
+ const cost=state.roundSpend>=150?0:10;
+ if(state.credits<cost){toast('先領取示範 credits，再來試試！');return;}
+ const index=nearest(),target=toys[index],kind=target.gold?'gold':'plush';
+ const aligned=Math.hypot(target.x-pos.x,target.z-pos.z)<=.30;
+ const bytes=new Uint32Array(1);crypto.getRandomValues(bytes);
+ const result=resolvePlay(state,kind,bytes[0]/4294967296,Date.now().toString(36)+'-'+bytes[0].toString(36),aligned);
+ if(!result)return;
+ const spent=state.roundSpend+result.cost;
+ busy=true;state=result.state;
+ anim={...result,roundSpend:spent,index,started:performance.now(),from:{...pos}};
+ save();release();keys.clear();
+ $('#status').textContent=result.strong?'強爪出動 · 瞄準仍然很重要':'正在下爪… 把幸運抓住。';beep();
+}
+$('#drop').onclick=drop;
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const views={front:[0,.12],left:[-Math.PI/2,.15],right:[Math.PI/2,.15],top:[0,1.38],bottom:[0,-1.05]};[angle,elevation]=views[b.dataset.view];document.querySelectorAll('[data-view]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});});
+canvas.onpointerdown=e=>{orbit={x:e.clientX,y:e.clientY,a:angle,e:elevation};canvas.setPointerCapture(e.pointerId);};
+canvas.onpointermove=e=>{if(orbit){angle=orbit.a-(e.clientX-orbit.x)*.009;elevation=clamp(orbit.e+(e.clientY-orbit.y)*.007,-1.4,1.4);document.querySelectorAll('[data-view]').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false');});}};
+canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=()=>orbit=null;
+canvas.addEventListener('wheel',e=>{e.preventDefault();distance=clamp(distance+e.deltaY*.006,7,12);},{passive:false});
+const joy=$('#joystick'),knob=$('#knob');let joyActive=false;
+function stick(e){let r=joy.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dz=e.clientY-r.top-r.height/2,n=Math.max(1,Math.hypot(dx,dz)/32);dx/=n;dz/=n;move={x:dx/32,z:dz/32};knob.style.transform='translate('+dx+'px,'+dz+'px)';}
+joy.onpointerdown=e=>{if(busy||dialog.open)return;e.preventDefault();joyActive=true;joy.setPointerCapture(e.pointerId);stick(e);};
+joy.onpointermove=e=>{if(joyActive)stick(e);};
+function release(){joyActive=false;move={x:0,z:0};knob.style.transform='';}
+joy.onpointerup=joy.onpointercancel=joy.onlostpointercapture=release;
+document.querySelectorAll('[data-dir]').forEach(b=>{b.onpointerdown=e=>{if(busy||dialog.open)return;e.preventDefault();const m={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.dir];move={x:m[0],z:m[1]};b.setPointerCapture(e.pointerId);};b.onpointerup=b.onpointercancel=b.onlostpointercapture=release;b.onclick=e=>{if(e.detail===0&&!busy){const m={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.dir];pos.x=clamp(pos.x+.2*(m[0]*Math.cos(angle)+m[1]*Math.sin(angle)),-1.35,1.35);pos.z=clamp(pos.z+.2*(-m[0]*Math.sin(angle)+m[1]*Math.cos(angle)),-1.07,1.07);}};});
+window.addEventListener('keydown',e=>{if(dialog.open||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;let k=e.key.length===1?e.key.toLowerCase():e.key;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(k)){e.preventDefault();keys.add(k);}if(e.code==='Space'){if(document.activeElement.tagName==='BUTTON'&&document.activeElement.id!=='drop')return;e.preventDefault();if(!e.repeat)drop();}});
+window.addEventListener('keyup',e=>keys.delete(e.key.length===1?e.key.toLowerCase():e.key));
+window.addEventListener('blur',()=>{keys.clear();release();orbit=null;});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();release();}});
+update();resize();requestAnimationFrame(render);
+const pending=state.awards.find(a=>a.id===state.pending);if(pending)awardScreen(pending);
+</script>
+</body></html>
