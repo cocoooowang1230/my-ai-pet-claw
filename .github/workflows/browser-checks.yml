@@ -1,0 +1,32 @@
+name: Pocket Claw browser checks
+on:
+  push:
+    branches: [main, "redesign/**"]
+    paths:
+      - "public/**"
+      - "tests/**"
+      - ".github/workflows/browser-checks.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Install browser test tools
+        run: npm install --prefix work/qa --no-save playwright@1.55.1
+      - name: Install Chromium and WebKit
+        run: work/qa/node_modules/.bin/playwright install --with-deps chromium webkit
+      - name: Check handheld layouts and gameplay
+        run: node tests/browser-checks.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: claw-browser-screenshots
+          path: work/screenshots/
+          retention-days: 7
