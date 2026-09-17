@@ -3,7 +3,7 @@ const fs = require('node:fs/promises');
 const http = require('node:http');
 const path = require('node:path');
 const { chromium, webkit } = require(path.resolve('work/qa/node_modules/playwright'));
-const sizes = [[320,568],[360,640],[390,844],[414,736],[768,1024],[1360,900],[844,390],[667,375],[568,320]];
+const sizes = [[320,440],[320,480],[320,568],[360,640],[390,844],[414,736],[768,1024],[1360,900],[844,390],[667,375],[568,320]];
 (async () => {
   const html = await fs.readFile('public/index.html');
   await fs.mkdir('work/screenshots', { recursive:true });
@@ -40,7 +40,7 @@ const sizes = [[320,568],[360,640],[390,844],[414,736],[768,1024],[1360,900],[84
       assert.deepEqual(errors,[],'Browser runtime errors');
       const file=width+'x'+height+'.jpg';
       const screenshot=await page.screenshot({path:'work/screenshots/'+file,type:'jpeg',quality:65});
-      if(width===390||width===1360)console.log('QA_IMAGE_'+(width===390?'PHONE':'DESKTOP')+' '+screenshot.toString('base64'));
+      if(width===390||width===1360||height===440)console.log('QA_IMAGE_'+(height===440?'COMPACT':width===390?'PHONE':'DESKTOP')+' '+screenshot.toString('base64'));
       console.log('LAYOUT_PASS '+width+'x'+height+' '+JSON.stringify(layout));
       await context.close();
     }

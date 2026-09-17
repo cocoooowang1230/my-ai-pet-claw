@@ -28,6 +28,14 @@ dialog{border:2px solid var(--ink);border-radius:18px;padding:24px;max-width:450
 
 /* Official My AI Pet artwork; the symbol remains as a fallback. */
 .paw-mark{position:relative;overflow:hidden}.brand-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.pet-portrait img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 42%}.pet-portrait{height:160px;background:#f4e8d3}
+
+.views button.active:hover:enabled{background:#e6c994;color:#372717}
+@media(max-width:760px) and (orientation:portrait) and (max-height:580px){
+.cabinet{grid-template-rows:30px 26px 26px minmax(0,1fr) 39px 100px 16px;gap:3px;padding-top:max(6px,env(safe-area-inset-top));padding-bottom:max(4px,env(safe-area-inset-bottom))}
+.cabinet-brand{font-size:14px}.cabinet-brand .paw-mark{width:25px;height:25px}.cabinet-brand small{font-size:6px;margin-top:2px}.utility button{min-height:27px;height:27px}
+.credit-counter strong{font-size:18px}.credit-counter button{height:23px;width:26px}.modes{padding:2px}.modes button{font-size:9px}.progress-head strong,#progressText{font-size:9px}.track{margin:3px 0 2px}#remaining{font-size:8px}
+.control-deck{padding-top:1px}.stick-surround{height:90px;width:108px}#joystick{width:76px;height:76px}#knob{width:42px;height:42px}.control-caption{display:none}.grab-control #drop{width:64px;height:64px;font-size:17px}.grab-control #cost{font-size:8px;margin-top:5px}.button-well{padding:5px}.speaker{margin-bottom:8px}.speaker i{height:22px}
+}
 </style></head><body>
 <main class="arcade-page" id="play">
 <aside class="intro">
