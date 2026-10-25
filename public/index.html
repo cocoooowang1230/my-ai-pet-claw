@@ -36,6 +36,8 @@ dialog{border:2px solid var(--ink);border-radius:18px;padding:24px;max-width:450
 .credit-counter strong{font-size:18px}.credit-counter button{height:23px;width:26px}.modes{padding:2px}.modes button{font-size:9px}.progress-head strong,#progressText{font-size:9px}.track{margin:3px 0 2px}#remaining{font-size:8px}
 .control-deck{padding-top:1px}.stick-surround{height:90px;width:108px}#joystick{width:76px;height:76px}#knob{width:42px;height:42px}.control-caption{display:none}.grab-control #drop{width:64px;height:64px;font-size:17px}.grab-control #cost{font-size:8px;margin-top:5px}.button-well{padding:5px}.speaker{margin-bottom:8px}.speaker i{height:22px}
 }
+.currency-picker{display:flex;align-items:center;gap:4px;min-width:0}.currency-picker button{display:flex;align-items:center;gap:5px;padding:4px 8px;font-size:9px;line-height:1.1;white-space:nowrap;background:#f9f5eb;border-color:#c6c2b5}.currency-picker button.active{background:#2a251e;color:#fff8e9;border-color:#2a251e}.currency-picker b{font:700 11px ui-monospace,monospace}.utility #rewards,.utility #account{font-size:9px;padding:5px 7px;min-height:31px;white-space:nowrap}.utility #account{font-weight:700}.progress-head #guaranteeLabel{color:inherit}.currency-picker button:disabled{opacity:.55}
+@media(max-width:360px){.utility #rewards{display:none}.currency-picker{gap:2px}.currency-picker button{padding:4px 5px;font-size:8px}.currency-picker b{font-size:9px}}
 </style></head><body>
 <main class="arcade-page" id="play">
 <aside class="intro">
@@ -45,58 +47,44 @@ dialog{border:2px solid var(--ink);border-radius:18px;padding:24px;max-width:450
 <div class="intro-bottom"><span class="live-dot"></span> SEASON 01 <span>可愛，正在補貨中。</span></div>
 </aside>
 <section class="cabinet" aria-label="My AI Pet 掌上夾娃娃機">
-<header class="cabinet-header"><div class="cabinet-brand"><span class="paw-mark" aria-hidden="true">✳<img class="brand-image" src="https://myaipet.ai/hero-mascot.jpg" alt="" onerror="this.hidden=true"></span><div>MY AI PET<small>POCKET CLAW · 01</small></div></div><div class="utility"><button id="rules" aria-label="玩法說明">?</button><button id="collection" aria-label="我的收藏">收藏 <b id="collectionCount">0</b></button><button id="options" aria-label="開啟遊戲設定">⋯</button></div></header>
-<div class="hud"><div class="credit-counter"><span class="coin" aria-hidden="true">C</span><strong id="balance">300</strong><span>credits</span><button id="topup" aria-label="加入 300 示範 credits">＋</button></div><div class="points-counter"><span aria-hidden="true">✦</span><b id="points">0</b><span>points</span></div></div>
+<header class="cabinet-header"><div class="cabinet-brand"><span class="paw-mark" aria-hidden="true">✳<img class="brand-image" src="https://myaipet.ai/hero-mascot.jpg" alt="" onerror="this.hidden=true"></span><div>MY AI PET<small>POCKET CLAW · 01</small></div></div><div class="utility"><button id="rules" aria-label="玩法說明">?</button><button id="rewards">獎勵</button><button id="account">登入</button><button id="options" aria-label="開啟遊戲設定">⋯</button></div></header>
+<div class="hud"><div class="currency-picker" aria-label="選擇遊戲幣別"><button data-currency="RP" class="active" aria-pressed="true">RP <b id="rpBalance">0</b></button><button data-currency="Credits" aria-pressed="false">Credits <b id="creditBalance">0</b></button></div><div class="points-counter"><span aria-hidden="true">✦</span><b id="points">0</b><span>SP</span></div></div>
 <div class="mode-row"><div class="modes" aria-label="獎品模式"><button data-mode="plush" class="active" aria-pressed="true">玩偶＋金券</button><button data-mode="balls" aria-pressed="false">驚喜球</button></div><span class="edition">SEASON 01</span></div>
 <div class="screen-frame"><div class="screen-top"><span><i class="live-dot"></i><span id="modeLabel">PET COLLECTION</span></span><span id="force">SOFT · 一般爪力</span></div><div class="canvas-wrap"><canvas id="scene" aria-label="娃娃機。拖曳畫面環視，使用機台下方搖桿移動爪子。">你的瀏覽器需要支援 Canvas 才能顯示機台。</canvas><div class="scene-label" id="target" aria-live="polite">移動光圈，對準獎品</div><span class="scene-hint">DRAG TO LOOK AROUND</span></div><div class="views" aria-label="觀看角度"><span>CAM</span><button data-view="front" aria-pressed="false">正面</button><button data-view="left" aria-pressed="false">左側</button><button data-view="right" aria-pressed="false">右側</button><button data-view="top" aria-pressed="false">俯視</button><button data-view="bottom" aria-pressed="false">仰視</button></div></div>
-<div class="guarantee"><div class="progress-head"><strong><span aria-hidden="true">✦</span> 150 強爪保夾</strong><span id="progressText">0 / 150 credits</span></div><div class="track"><div id="progress"></div></div><p id="remaining">再花 150 credits，啟動持續強爪</p></div>
+<div class="guarantee"><div class="progress-head"><strong><span aria-hidden="true">✦</span> <span id="guaranteeLabel">RP 保夾進度</span></strong><span id="progressText">登入後查看</span></div><div class="track"><div id="progress"></div></div><p id="remaining">RP 與 Credits 的保夾進度分開計算</p></div>
 <div class="control-deck"><div class="stick-control"><div class="stick-surround"><span class="axis axis-up" aria-hidden="true">▲</span><span class="axis axis-left" aria-hidden="true">◀</span><div id="joystick" tabindex="0" role="group" aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight W A S D" aria-label="拖曳搖桿，或使用方向鍵移動爪子"><div id="knob"><span aria-hidden="true">✳</span></div></div><span class="axis axis-right" aria-hidden="true">▶</span><span class="axis axis-down" aria-hidden="true">▼</span></div><span class="control-caption">MOVE<span class="keyboard-hint"> · WASD / ↑↓←→</span></span></div><div class="deck-center" aria-hidden="true"><div class="speaker"><i></i><i></i><i></i><i></i><i></i></div><span>PLAY A LITTLE.<br>LOVE A LOT.</span></div><div class="grab-control"><div class="button-well"><button id="drop">下爪</button></div><span id="cost">10 credits / 次</span><span class="keyboard-hint">SPACE TO GRAB</span></div></div>
 <div class="cabinet-footer"><span id="status" role="status">準備好，遇見你的 AI 夥伴</span><button id="sound" aria-pressed="false">音效：關</button></div>
 </section>
-<aside class="side-notes"><div class="note-card"><span class="eyebrow">HOW TO PLAY</span><h2>手感就位，<br>幸運到位。</h2><ol><li><b>01</b><span>撥動搖桿<br><small>把光圈移到獎品中心</small></span></li><li><b>02</b><span>按下爪<br><small>看看今天的幸運</small></span></li><li><b>03</b><span>收進收藏<br><small>跟新的小夥伴打招呼</small></span></li></ol></div><div class="gold-note"><div id="previewGold"></div><span>一點金色驚喜</span><strong>+500</strong><small>SEASON POINTS</small></div><p class="demo-note">試玩原型 · Credits 與獎品為示範。<br>遊戲進度保存在此瀏覽器。</p></aside>
+<aside class="side-notes"><div class="note-card"><span class="eyebrow">HOW TO PLAY</span><h2>手感就位，<br>幸運到位。</h2><ol><li><b>01</b><span>撥動搖桿<br><small>把光圈移到獎品中心</small></span></li><li><b>02</b><span>按下爪<br><small>看看今天的幸運</small></span></li><li><b>03</b><span>收進收藏<br><small>跟新的小夥伴打招呼</small></span></li></ol></div><div class="gold-note"><div id="previewGold"></div><span>一點金色驚喜</span><strong>+500</strong><small>SEASON POINTS</small></div><p class="demo-note">測試環境 · Credits 與獎品為示範。<br>規則與庫存依後台設定。</p></aside>
 </main>
-<dialog id="settingsDialog" aria-labelledby="settingsTitle"><div class="modal-head"><h2 id="settingsTitle">遊戲設定</h2><button id="closeSettings" aria-label="關閉設定">×</button></div><div class="settings-content"><p class="muted">示範模式 · 已玩 <b id="plays">0</b> 次。Credits、獎品與領獎皆為模擬，沒有實際收費或寄送。</p><button id="testStrong" class="wide">載入累計 140 credits 情境</button><button id="reset" class="wide">重新開始示範</button><p>保夾達標後，持續強爪並免費重抓；中獎後重新計算。</p><p id="storageNote"></p></div></dialog>
+<dialog id="settingsDialog" aria-labelledby="settingsTitle"><div class="modal-head"><h2 id="settingsTitle">遊戲資訊</h2><button id="closeSettings" aria-label="關閉設定">×</button></div><div class="settings-content"><p id="accountStatus" class="muted">正在連線…</p><p>本局使用 RP 或 Credits 的保夾進度分開累積。達到該幣別門檻後，強爪免費重抓直到中獎；中獎後只重置該幣別的進度。</p><p>目前已玩 <b id="plays">0</b> 次。若要管理遊戲機率、保夾門檻、獎品和庫存，請前往 <a href="/admin.html"><b>管理後台</b></a>。</p><p>帳戶、點數、獎品和訂單由伺服器保存；Credits 尚未串接金流，配送訂單需由營運人員人工處理。</p></div></dialog>
 <dialog id="modal" aria-labelledby="modalTitle"><div class="modal-head"><h2 id="modalTitle"></h2><button id="closeModal" aria-label="關閉視窗">×</button></div><div id="modalContent"></div></dialog><div id="toast" role="status"></div><noscript><p class="noscript">請啟用 JavaScript 以操作遊戲。</p></noscript>
-<script>
-function resolvePlay(s,kind,roll,id,aligned){
-  const cost=s.roundSpend>=150?0:10;
-  if(s.credits<cost)return null;
-  const next=JSON.parse(JSON.stringify(s));
-  next.credits-=cost;next.plays++;next.roundSpend+=cost;
-  const strong=next.roundSpend>=150;
-  const won=aligned&&(strong||roll<0.1);
-  let award=null;
-  if(won){
-    award={id,type:kind,claimed:false};
-    next.awards.unshift(award);
-    if(kind==='gold')next.points+=500;
-    next.roundSpend=0;next.pending=id;
-  }
-  return {state:next,award,strong,cost,aligned};
-}
-
+<script src="/demo-api.js"></script><script>
 const $=s=>document.querySelector(s);
-const KEY='my-ai-pad-claw-v2';
-const fresh=()=>({credits:300,plays:0,roundSpend:0,points:0,awards:[],pending:null});
-let state=fresh(), mode='plush', busy=false, anim=null, last=performance.now(), soundOn=false;
-try{const saved=JSON.parse(localStorage.getItem(KEY));if(saved&&Number.isSafeInteger(saved.credits)&&saved.credits>=0&&Number.isSafeInteger(saved.roundSpend)&&saved.roundSpend>=0&&Number.isSafeInteger(saved.plays)&&saved.plays>=0&&Number.isSafeInteger(saved.points)&&saved.points>=0&&Array.isArray(saved.awards)){state=saved;state.awards=state.awards.filter(a=>a&&typeof a.id==='string'&&['plush','gold'].includes(a.type));}}catch{}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch{$('#storageNote').textContent='此瀏覽器無法儲存紀錄，關閉頁面後進度將消失。';}update();}
+const fresh=()=>({credits:0,rp:0,plays:0,roundSpend:0,progress:{RP:0,Credits:0},points:0,awards:[],pending:null});
+let state=fresh(), mode='plush', activeCurrency='RP', busy=false, anim=null, last=performance.now(), soundOn=false, currentUser=null, remoteReady=false, backendMessage='正在連接遊戲服務…', gameConfig={currency:{RP:{cost:300,threshold:3000,weakChance:.1,strongChance:1},Credits:{cost:10,threshold:150,weakChance:.1,strongChance:1}}}, shopItems=[];
+async function api(path,options={}){const r=await fetch('/api/'+path,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(options.headers||{})},...options});let data={};try{data=await r.json();}catch{}if(!r.ok)throw new Error(data.error||'服務暫時無法使用。');return data;}
+function applySnapshot(s){currentUser=s.user||null;remoteReady=true;gameConfig=s.config||gameConfig;shopItems=s.prizes||[];state=fresh();state.plays=s.plays||0;state.credits=s.wallet?.credits||0;state.rp=s.wallet?.rp||0;state.points=s.wallet?.sp||0;state.progress=s.wallet?.progress||{RP:0,Credits:0};state.roundSpend=state.progress[activeCurrency]||0;state.awards=(s.inventory||[]).map(i=>({id:i.id,type:['plush','physical'].includes(i.kind)?'plush':i.kind==='ticket'?'gold':'digital',kind:i.kind,name:i.name,claimed:i.status!=='stored',status:i.status,recycleRP:i.recycleRP}));backendMessage=currentUser?`已登入 ${currentUser.email}`:'請登入或建立帳戶後開始遊玩。';update();}
+async function refreshState(){try{applySnapshot(await api('state'));}catch(e){remoteReady=false;backendMessage=e.message;update();}}
+function save(){update();}
 function update(){
- $('#balance').textContent=state.credits.toLocaleString();
+ $('#rpBalance').textContent=state.rp.toLocaleString();$('#creditBalance').textContent=state.credits.toLocaleString();
  $('#points').textContent=state.points.toLocaleString();
- $('#collectionCount').textContent=state.awards.length;
+ state.roundSpend=state.progress[activeCurrency]||0;const rule=gameConfig.currency?.[activeCurrency]||{cost:0,threshold:150,weakChance:0,strongChance:0};const threshold=Number(rule.threshold)||0;
  const shownSpend=busy&&anim?anim.roundSpend:state.roundSpend;
- const strong=busy&&anim?anim.strong:state.roundSpend>=150, cost=strong?0:10;
- $('#progressText').textContent=strong?'強爪已啟動':Math.min(shownSpend,150)+' / 150 credits';
- $('#progress').style.width=Math.min(shownSpend/150*100,100)+'%';
- $('#remaining').textContent=strong?'持續強爪，直到成功夾中。':'再花 '+(150-shownSpend)+' credits，啟動持續強爪';
+ const strong=busy&&anim?anim.strong:threshold>0&&state.roundSpend>=threshold, cost=strong?0:Number(rule.cost)||0,balance=activeCurrency==='RP'?state.rp:state.credits;
+ document.querySelectorAll('[data-currency]').forEach(b=>{b.classList.toggle('active',b.dataset.currency===activeCurrency);b.setAttribute('aria-pressed',String(b.dataset.currency===activeCurrency));});
+ $('#guaranteeLabel').textContent=activeCurrency+' 保夾進度';$('#progressText').textContent=currentUser?(strong?'強爪已啟動':Math.min(shownSpend,threshold)+' / '+threshold+' '+activeCurrency):'登入後查看';
+ $('#progress').style.width=threshold?Math.min(shownSpend/threshold*100,100)+'%':'0%';
+ $('#remaining').textContent=!currentUser?'登入後會分別記錄 RP 與 Credits 的保夾進度':strong?'持續強爪，免費重抓直到中獎。':threshold?`再累積 ${Math.max(0,threshold-shownSpend)} ${activeCurrency}，啟動強爪`:'此幣別目前未啟用保夾';
  $('#force').textContent=strong?'STRONG · 強爪':'SOFT · 一般爪力';
  $('#force').classList.toggle('strong',strong);
- $('#cost').textContent=cost===0?'強爪免費重試':cost+' credits / 次';
+ $('#cost').textContent=strong?'強爪免費重試':`${cost} ${activeCurrency} / 次`;
  $('#plays').textContent=state.plays;
- $('#drop').disabled=busy||state.credits<cost;
+ $('#drop').disabled=busy||!remoteReady||!currentUser||balance<cost;
  document.querySelectorAll('[data-mode],#collection,#reset,#testStrong,#options').forEach(b=>b.disabled=busy);
- $('#drop').textContent=busy?'抓取中':state.credits<cost?'點數不足':'下爪';
+ $('#account').textContent=currentUser?'帳戶':'登入';$('#drop').textContent=busy?'抓取中':!currentUser?'請先登入':balance<cost?'點數不足':'下爪';$('#accountStatus').textContent=backendMessage;
+ $('#status').textContent=remoteReady?backendMessage:'後端尚未完成設定 · '+backendMessage;
 }
 let toastTimer;function toast(t){$('#toast').textContent=t;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3500);}
 let audio;function beep(win=false){if(!soundOn)return;try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.connect(g);g.connect(audio.destination);o.frequency.setValueAtTime(win?660:240,audio.currentTime);o.frequency.exponentialRampToValueAtTime(win?1100:120,audio.currentTime+.16);g.gain.setValueAtTime(.035,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.22);o.start();o.stop(audio.currentTime+.23);}catch{}}
@@ -113,23 +101,24 @@ $('#closeModal').onclick=()=>dialog.close();
 dialog.addEventListener('close',()=>{content.replaceChildren();state.pending=null;save();});
 function awardScreen(a,capsule=false){
  if(capsule){show('你的驚喜球到了！','<div class="capsule-reveal"><span>?</span></div><p class="center muted">打開它，看看今天遇見誰。</p><button class="primary wide" id="reveal">打開驚喜球</button>');$('#reveal').onclick=()=>awardScreen(a,false);return;}
- show(a.type==='plush'?'新的 AI 夥伴，準備回家。':'金色的幸運，屬於你。','<div class="reward-art">'+(a.type==='plush'?mascot:ticket)+'</div><p class="center">'+(a.type==='plush'?'My AI Pet 原創玩偶':'500 Season Points 已加入示範帳戶')+'</p><p class="center muted">已放入「我的收藏」</p><button class="primary wide" id="awardAction">'+(a.type==='plush'&&!a.claimed?'體驗填寫領獎資料':'收進收藏')+'</button>');
- $('#awardAction').onclick=()=>{if(a.type==='plush'&&!a.claimed)shipping(a);else dialog.close();};
+ const title=safeText(a.name||'MY AI PET 獎品'),isTicket=a.type==='gold',isPhysical=a.type==='plush',points=Number(a.spReward)||0;
+ show(isTicket?'金色的幸運，屬於你。':isPhysical?'新的 AI 夥伴，準備回家。':'你獲得一項獎勵。','<div class="reward-art">'+(isTicket?ticket.replace('+500','+'+points.toLocaleString()):isPhysical?mascot:'🎁')+'</div><p class="center"><b>'+title+'</b></p>'+(isTicket&&points?'<p class="center">'+points.toLocaleString()+' SP 已加入帳戶</p>':'')+'<p class="center muted">已放入「我的獎品倉庫」</p><button class="primary wide" id="awardAction">'+(isPhysical&&!a.claimed?'填寫寄送資料':'查看獎品倉庫')+'</button>');
+ $('#awardAction').onclick=()=>{if(isPhysical&&!a.claimed)shipping(a);else dialog.close();};
 }
 function shipping(a){
- show('讓 AI 夥伴找到你','<p class="muted">領獎流程示範。資料不會傳送或儲存，請使用測試資料。</p><form id="shipForm"><label>收件人<input name="recipient" required maxlength="40" placeholder="測試收件人" autocomplete="off"></label><label>聯絡電話<input name="phone" required maxlength="30" type="tel" placeholder="測試電話" autocomplete="off"></label><label>收件地址<textarea name="address" required maxlength="200" placeholder="測試地址" autocomplete="off"></textarea></label><button class="primary wide" type="submit">完成示範領獎</button></form>');
- $('#shipForm').onsubmit=e=>{e.preventDefault();a.claimed=true;save();show('示範領獎完成','<div class="reward-art">'+mascot+'</div><p>表單資料已清除，沒有送出訂單或安排實際出貨。</p><button id="done" class="primary wide">回到遊戲</button>');$('#done').onclick=()=>dialog.close();};
+ show('申請寄送實體獎品','<p class="muted">請確認收件資訊。此表單會建立待處理訂單，並由營運人員確認出貨。</p><form id="shipForm"><label>收件人<input name="recipient" required maxlength="80" autocomplete="name"></label><label>聯絡電話<input name="phone" required maxlength="40" type="tel" autocomplete="tel"></label><label>收件地址<textarea name="address" required maxlength="500" autocomplete="street-address"></textarea></label><button class="primary wide" type="submit">送出寄送申請</button></form>');
+ $('#shipForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{await api('rewards',{method:'POST',body:JSON.stringify({action:'ship',inventoryIds:[a.id],recipient:f.get('recipient'),phone:f.get('phone'),address:f.get('address')})});await refreshState();show('寄送申請已送出','<p>訂單已建立，後續將由營運人員確認配送。</p><button id="done" class="primary wide">完成</button>');$('#done').onclick=()=>dialog.close();}catch(err){toast(err.message);}};
 }
-$('#collection').onclick=()=>{show('我的收藏','<p class="muted">已獲得 '+state.awards.length+' 個獎品 · '+state.points+' season points</p><div id="awardList" class="award-list"></div>');if(!state.awards.length){$('#awardList').innerHTML='<p>第一個 AI 夥伴，正等著你帶回家。</p>';return;}state.awards.forEach(a=>{let b=document.createElement('button');b.className='award-card';b.innerHTML=(a.type==='plush'?mascot:ticket)+'<span>'+(a.type==='plush'?'My AI Pet 玩偶':'500 Season Points')+'</span><small>'+(a.type==='gold'?'積分已入帳':a.claimed?'領獎流程已體驗':'點擊體驗領獎')+'</small>';b.onclick=()=>awardScreen(a);$('#awardList').append(b);});};
-$('#rules').onclick=()=>show('玩法與示範設定','<ol class="rules"><li>每次下爪花 10 示範 credits。搖桿、方向鍵或 WASD 移動爪子，空白鍵或「下爪」開始。方向會跟著觀看角度變化。</li><li>拖曳機台畫面可以環視，滾輪縮放。請把爪子下方光圈移到獎品中心；沒有瞄準會抓空。</li><li>一般爪力：瞄準後有 10% 機率成功帶回獎品。獨立機率，10 次不代表必定中 1 次；抓空不會中獎。</li><li>本輪累計花到 150 credits，從達標那次起增強爪力，之後持續到成功夾中。強爪仍需要瞄準；不會自動選取或直接發獎。</li><li>達標後不再扣 credits，可以免費重試並持續強爪，直到成功夾中。獲得玩偶或金券後，累計歸零並恢復一般爪力，下一局重新扣 credits。</li><li>驚喜球可開出玩偶或金券；金券提供 500 示範 season points。切換展示模式不會清除保夾進度。</li><li>這是本機體驗版：Credits、積分、收藏皆為示範資料；沒有付款、兌換或實際出貨。領獎表單不會保存或傳送個人資料。玩偶造型為暫用示意。</li></ol>');
-$('#topup').onclick=()=>{if(state.credits<=1000000){state.credits+=300;save();toast('已加入 300 示範 credits');}};
+function safeText(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function showPrizes(tab='warehouse'){if(!currentUser){accountDialog();return;}let d;try{d=await api('rewards');}catch(e){toast(e.message);return;}show('獎勵與兌換','<div class="modal-head"><button id="shopTab">Gift Shop</button><button id="warehouseTab">我的獎品倉庫</button></div><div id="rewardContent"></div>');$('#shopTab').onclick=()=>showPrizes('shop');$('#warehouseTab').onclick=()=>showPrizes('warehouse');const root=$('#rewardContent');
+ if(tab==='shop'){const items=d.shop.filter(p=>Number(p.price_rp)>0&&Number(p.stock)>0);root.innerHTML=items.length?'<p class="muted">使用 RP 直接兌換。庫存與價格以後台設定為準。</p><div class="award-list">'+items.map(p=>`<button class="award-card" data-redeem="${safeText(p.id)}"><span>${safeText(p.name)}</span><small>${Number(p.price_rp).toLocaleString()} RP · 庫存 ${p.stock}</small></button>`).join('')+'</div>':'<p class="muted">目前沒有可兌換商品。</p>';root.querySelectorAll('[data-redeem]').forEach(b=>b.onclick=async()=>{try{await api('rewards',{method:'POST',body:JSON.stringify({action:'redeem',prizeId:b.dataset.redeem})});await refreshState();toast('兌換完成，獎品已放入倉庫。');showPrizes('warehouse');}catch(e){toast(e.message);}});return;}
+ const items=d.warehouse.filter(x=>x.status==='stored');root.innerHTML=items.length?'<p class="muted">可合併多件獎品寄送；也可以回收成 RP。</p><form id="warehouseForm"><div class="award-list">'+items.map(p=>`<label class="award-card"><input type="checkbox" name="inventory" value="${safeText(p.id)}"><span>${safeText(p.name)}</span><small>回收 ${Number(p.recycle_rp)} RP</small><button type="button" data-recycle="${safeText(p.id)}">回收</button></label>`).join('')+'</div><label>收件人<input name="recipient" required maxlength="80"></label><label>電話<input name="phone" required maxlength="40" type="tel"></label><label>地址<textarea name="address" required maxlength="500"></textarea></label><button class="primary wide" type="submit">合併寄送勾選獎品</button></form>':'<p class="muted">倉庫目前是空的。先去機台試試手氣吧。</p>';if(d.orders?.length){const labels={requested:'待處理',approved:'已確認',shipped:'已寄出',delivered:'已送達',cancelled:'已取消'};root.insertAdjacentHTML('beforeend','<h3 style="margin-top:16px">寄送申請紀錄</h3><ul>'+d.orders.map(o=>'<li>'+new Date(o.created_at).toLocaleDateString()+' · '+(labels[o.status]||'處理中')+'</li>').join('')+'</ul>');} root.querySelectorAll('[data-recycle]').forEach(b=>b.onclick=async()=>{if(!confirm('確定回收這件獎品並換成 RP？回收後不能再寄送。'))return;try{const result=await api('rewards',{method:'POST',body:JSON.stringify({action:'recycle',inventoryId:b.dataset.recycle})});await refreshState();toast(`已回收，獲得 ${result.credited} RP`);showPrizes('warehouse');}catch(e){toast(e.message);}});const form=$('#warehouseForm');if(form)form.onsubmit=async e=>{e.preventDefault();const fd=new FormData(form),ids=fd.getAll('inventory');try{await api('rewards',{method:'POST',body:JSON.stringify({action:'ship',inventoryIds:ids,recipient:fd.get('recipient'),phone:fd.get('phone'),address:fd.get('address')})});await refreshState();toast('寄送申請已送出');showPrizes('warehouse');}catch(err){toast(err.message);}};}
+$('#rewards').onclick=()=>showPrizes('shop');
+function accountDialog(){if(currentUser){show('MY AI PET 帳戶','<p>已登入 <b>'+safeText(currentUser.email)+'</b></p><p class="muted" style="margin:10px 0">RP、Credits 與 SP 餘額都保存在這個帳戶中。</p><button class="wide" id="logoutBtn">登出</button><p style="margin-top:12px"><a href="/admin.html">管理員後台 →</a></p>');$('#logoutBtn').onclick=async()=>{try{await api('auth',{method:'POST',body:JSON.stringify({action:'logout'})});await refreshState();dialog.close();toast('已登出');}catch(err){toast(err.message);}};return;}show('MY AI PET 帳戶','<form id="accountForm"><label>Email<input name="email" type="email" required autocomplete="email"></label><label>密碼<input name="password" type="password" required minlength="8" autocomplete="current-password"></label><label class="check"><input name="signup" type="checkbox">建立新帳戶</label><p class="muted">Credits、RP、SP 和獎品會保存在帳戶中。忘記密碼請聯絡管理員。</p><button class="primary wide" type="submit">登入</button></form><p style="margin-top:12px"><a href="/admin.html">管理員後台 →</a></p>');$('#accountForm').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.currentTarget),signup=fd.get('signup')==='on';try{await api('auth',{method:'POST',body:JSON.stringify({action:signup?'signup':'login',email:fd.get('email'),password:fd.get('password')})});await refreshState();dialog.close();toast(currentUser?'登入成功':'');}catch(err){toast(err.message);}};}
+$('#account').onclick=()=>accountDialog();
+$('#rules').onclick=()=>show('玩法與遊戲規則','<ol class="rules"><li>先登入帳戶，再選 RP 或 Credits；兩種餘額與保夾進度各自計算。</li><li>用搖桿或方向鍵移動爪子，也可拖曳畫面環視。將光圈對準獎品後下爪。</li><li>一般爪的中獎率由後台設定；未瞄準獎品時不會中獎。</li><li>所選幣別累計達到後台設定門檻的那次起啟動強爪。之後未中獎的重抓不再扣該幣別點數，直到中獎。</li><li>中獎後只重置本次所用幣別的保夾進度；另一種幣別的進度保留。強爪仍需要瞄準。</li><li>獎品種類、庫存、價格、機率與金券 SP 獎勵由後台設定。實體獎品可申請寄送或回收成 RP。</li><li>點數、遊玩結果和寄送申請會保存於帳戶。現階段尚未接上付款金流與物流商。</li></ol>');
+$('#topup')?.remove();
 $('#sound').onclick=()=>{soundOn=!soundOn;$('#sound').textContent=soundOn?'音效：開':'音效：關';$('#sound').setAttribute('aria-pressed',String(soundOn));beep(true);};
-$('#testStrong').onclick=()=>{if(busy)return;settingsDialog.close();state.roundSpend=140;state.credits=Math.max(state.credits,10);save();toast('已載入累計 140 credits 的示範情境');};
-$('#reset').onclick=()=>{
- if(busy)return;
- show('重新開始示範？','<p>這會清除本機示範收藏、積分與保夾進度，並恢復 300 示範 credits。</p><button class="primary wide" id="resetConfirm">確認重新開始</button>');
- $('#resetConfirm').onclick=()=>{state=fresh();save();dialog.close();toast('已重新開始');};
-};
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(busy)return;mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});$('#modeLabel').textContent=mode==='plush'?'PET COLLECTION':'MYSTERY CAPSULES';toys=makePile();});
 const canvas=$('#scene'),ctx=canvas.getContext('2d');
 let W=1,H=1,DPR=1,angle=-.38,elevation=.2,distance=8.6,pos={x:0,z:0},move={x:0,z:0},keys=new Set(),orbit=null;
@@ -219,28 +208,25 @@ function render(now){
  for(let i=0;i<3;i++){let q=i*Math.PI*2/3,spread=.18+grip*.22;line([[cx,cy,cz],[cx+Math.cos(q)*.34,cy-.22,cz+Math.sin(q)*.34],[cx+Math.cos(q)*spread,cy-.51,cz+Math.sin(q)*spread]],'#8d7854',5);}
  box(cx,cy+.03,cz,.3,.2,.3,'#c8b184');
  drawList.sort((a,b)=>b.d-a.d).forEach(c=>c.draw());
- const label=project(0,4.38,1.58);ctx.fillStyle='#564024';ctx.textAlign='center';ctx.font='800 '+Math.max(10,label.s*.13)+'px system-ui';ctx.fillText('MY AI PET',label.x,label.y+4);
+ const label=project(0,4.38,1.58);ctx.fillStyle='#564024';ctx.textAlign='center';ctx.font='800 '+Math.max(10,label.s*.13)+'px system-ui';ctx.fillText('PET',label.x,label.y+4);
  const gate=project(-1.22,.11,1.59);ctx.font='bold 9px system-ui';ctx.fillStyle='#fff1d3';ctx.fillText('PRIZE OUT',gate.x,gate.y);
  if(!busy){$('#target').textContent=!aligned?'移動光圈，對準獎品':mode==='balls'?'已瞄準：驚喜球':target.gold?'已瞄準：金色積分券':'已瞄準：My AI Pet 玩偶';$('#target').classList.toggle('locked',aligned);}
  if(anim&&t>5.1){const result=anim;if(result.aligned)settlePrize(result.index,!!result.award);anim=null;busy=false;pos={x:0,z:0};$('#status').textContent='準備好，遇見你的 AI 夥伴';update();if(result.award){beep(true);awardScreen(result.award,mode==='balls');}else{beep();toast(!result.aligned?(result.strong?'抓空了！強爪持續中，對準獎品再試。':'抓空了，移動光圈對準獎品中心。'):'爪子鬆開了… 保夾消費已累積。');}}
  requestAnimationFrame(render);
 }
-function drop(){
+async function drop(){
  if(busy||modalOpen())return;
- const cost=state.roundSpend>=150?0:10;
- if(state.credits<cost){toast('先領取示範 credits，再來試試！');return;}
+ if(!currentUser){accountDialog();return;}if(!remoteReady){toast('遊戲服務尚未連線。');return;}
+ const rule=gameConfig.currency[activeCurrency],progress=state.progress[activeCurrency]||0,cost=progress>=Number(rule.threshold)?0:Number(rule.cost),balance=activeCurrency==='RP'?state.rp:state.credits;
+ if(balance<cost){toast(`${activeCurrency} 餘額不足，請聯絡管理員或查看 Pass 說明。`);return;}
  const index=nearest(),target=toys[index],kind=target.gold?'gold':'plush';
  const aligned=Math.hypot(target.x-pos.x,target.z-pos.z)<=.30;
- const bytes=new Uint32Array(1);crypto.getRandomValues(bytes);
- const result=resolvePlay(state,kind,bytes[0]/4294967296,Date.now().toString(36)+'-'+bytes[0].toString(36),aligned);
- if(!result)return;
- const spent=state.roundSpend+result.cost;
- busy=true;state=result.state;
- anim={...result,roundSpend:spent,index,started:performance.now(),from:{...pos}};
- save();release();keys.clear();
- $('#status').textContent=result.strong?'強爪出動 · 瞄準仍然很重要':'正在下爪… 把幸運抓住。';beep();
+ busy=true;update();release();keys.clear();
+ try{const data=await api('play',{method:'POST',body:JSON.stringify({currency:activeCurrency,aligned})});const kind=data.prize?.kind,result=data.prize?{id:data.prize.id,type:['plush','physical'].includes(kind)?'plush':kind==='ticket'?'gold':'digital',name:data.prize.name,kind,recycleRP:data.prize.recycleRP,spReward:data.prize.spReward,claimed:false}:null;const roundSpend=data.state?.wallet?.progress?.[activeCurrency]||0;applySnapshot(data.state);anim={award:result,strong:data.strong,cost:data.charged,aligned,index,roundSpend,started:performance.now(),from:{...pos}};$('#status').textContent=data.strong?'強爪出動 · 瞄準仍然很重要':'正在下爪… 把幸運抓住。';beep();}
+ catch(e){busy=false;await refreshState();toast(e.message);}
 }
 $('#drop').onclick=drop;
+document.querySelectorAll('[data-currency]').forEach(b=>b.onclick=()=>{if(busy)return;activeCurrency=b.dataset.currency;state.roundSpend=state.progress[activeCurrency]||0;update();});
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const views={front:[0,.12],left:[-Math.PI/2,.15],right:[Math.PI/2,.15],top:[0,1.38],bottom:[0,-1.05]};[angle,elevation]=views[b.dataset.view];document.querySelectorAll('[data-view]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});});
 canvas.onpointerdown=e=>{orbit={x:e.clientX,y:e.clientY,a:angle,e:elevation};canvas.setPointerCapture(e.pointerId);};
 canvas.onpointermove=e=>{if(orbit){angle=orbit.a-(e.clientX-orbit.x)*.009;elevation=clamp(orbit.e+(e.clientY-orbit.y)*.007,-1.4,1.4);document.querySelectorAll('[data-view]').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false');});}};
@@ -257,7 +243,7 @@ window.addEventListener('keydown',e=>{if(modalOpen()||/INPUT|TEXTAREA|SELECT/.te
 window.addEventListener('keyup',e=>keys.delete(e.key.length===1?e.key.toLowerCase():e.key));
 window.addEventListener('blur',()=>{keys.clear();release();orbit=null;});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();release();}});
-update();resize();requestAnimationFrame(render);
+update();resize();requestAnimationFrame(render);refreshState();
 const pending=state.awards.find(a=>a.id===state.pending);if(pending)awardScreen(pending);
 
 </script></body></html>

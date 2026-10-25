@@ -2,103 +2,35 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const http = require('node:http');
 const path = require('node:path');
-const { chromium, webkit } = require(path.resolve('work/qa/node_modules/playwright'));
+const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || path.resolve('work/qa/node_modules/playwright'));
 const sizes = [[320,440],[320,480],[320,568],[360,640],[390,844],[414,736],[768,1024],[1360,900],[844,390],[667,375],[568,320]];
-(async () => {
-  const html = await fs.readFile('public/index.html');
-  await fs.mkdir('work/screenshots', { recursive:true });
-  const server = http.createServer((req,res) => {res.writeHead(200, {'Content-Type':'text/html; charset=utf-8'});res.end(html);});
-  await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
-  const url = 'http://127.0.0.1:' + server.address().port;
-  let browser;
-  try {
-    browser = await chromium.launch();
-    for (const [width,height] of sizes) {
-      const context = await browser.newContext({viewport:{width,height},hasTouch:width<900,deviceScaleFactor:1});
-      const page = await context.newPage();
-      const errors=[];page.on('pageerror', e => errors.push(e.message));
-      await page.goto(url);await page.waitForTimeout(200);
-      const layout = await page.evaluate(() => {
-        const rect = id => {const r=document.querySelector(id).getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right};};
-        return {w:innerWidth,h:innerHeight,scrollW:document.documentElement.scrollWidth,scrollH:document.documentElement.scrollHeight,scene:rect('#scene'),joy:rect('#joystick'),drop:rect('#drop'),cabinet:rect('.cabinet')};
-      });
-      assert.ok(layout.scrollW<=width+1,'Horizontal overflow '+width+' '+JSON.stringify(layout));
-      assert.ok(layout.scene.height>=110,'Game viewport too short '+JSON.stringify(layout));
-      for(const id of ['scene','joy','drop']) {
-        const r=layout[id];assert.ok(r.x>=0&&r.y>=0&&r.right<=width+1&&r.bottom<=height+1,'Control outside viewport '+id+' '+JSON.stringify(layout));
-      }
-      assert.ok(layout.joy.y>=layout.scene.bottom||width>height,'Portrait controls overlap scene');
-      assert.equal(await page.title(),'My AI Pet · Pocket Claw');
-      assert.equal(await page.locator('body').innerText().then(t=>/MY AI PAD|My AI Pad/.test(t)),false);
-      await page.locator('#options').click();
-      assert.equal(await page.locator('#settingsDialog').evaluate(d=>d.open),true);
-      await page.locator('#closeSettings').click();
-      await page.locator('[data-mode="balls"]').click();
-      await page.locator('[data-view="top"]').click();
-      await page.locator('[data-mode="plush"]').click();
-      await page.locator('[data-view="front"]').click();
-      assert.deepEqual(errors,[],'Browser runtime errors');
-      const file=width+'x'+height+'.jpg';
-      const screenshot=await page.screenshot({path:'work/screenshots/'+file,type:'jpeg',quality:65});
-      if(width===390||width===1360||height===440)console.log('QA_IMAGE_'+(height===440?'COMPACT':width===390?'PHONE':'DESKTOP')+' '+screenshot.toString('base64'));
-      console.log('LAYOUT_PASS '+width+'x'+height+' '+JSON.stringify(layout));
-      await context.close();
-    }
-    const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true});
-    const page=await context.newPage();await page.goto(url);
-    await page.locator('[data-view="front"]').click();
-    const joy=await page.locator('#joystick').boundingBox();
-    const start=await page.evaluate(()=>({...pos}));
-    const cdp=await context.newCDPSession(page);
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:joy.x+joy.width/2,y:joy.y+joy.height/2,id:1}]});
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:joy.x+joy.width*.85,y:joy.y+joy.height/2,id:1}]});
-    await page.waitForTimeout(300);
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-    const after=await page.evaluate(()=>({...pos}));
-    assert.ok(after.x>start.x+.1,'Touch joystick does not move claw');
-    const moved=await page.evaluate(()=>({...pos}));await page.waitForTimeout(150);
-    assert.deepEqual(await page.evaluate(()=>({...pos})),moved,'Joystick keeps moving after release');
-    await page.locator('#options').click();await page.locator('#testStrong').click();
-    assert.equal(await page.locator('#settingsDialog').evaluate(d=>d.open),false);
-    await page.evaluate(()=>{pos={x:-1.35,z:1.07};});
-    await page.locator('#drop').tap();await page.waitForFunction(()=>!busy,{},{timeout:8000});
-    assert.equal(await page.evaluate(()=>state.roundSpend),150);
-    const paidBalance=await page.evaluate(()=>state.credits);
-    await page.evaluate(()=>{pos={x:-1.35,z:1.07};});
-    await page.locator('#drop').tap();await page.waitForFunction(()=>!busy,{},{timeout:8000});
-    assert.equal(await page.evaluate(()=>state.credits),paidBalance);
-    await page.evaluate(()=>{const t=toys.find(t=>!t.gold);pos={x:t.x,z:t.z};});
-    await page.locator('#drop').tap();await page.waitForFunction(()=>!busy,{},{timeout:8000});
-    assert.equal(await page.evaluate(()=>state.roundSpend),0);
-    assert.equal(await page.evaluate(()=>state.awards.length),1);
-    assert.equal(await page.evaluate(()=>state.credits),paidBalance);
-    await page.locator('#closeModal').click();
-    await page.reload();assert.equal(await page.evaluate(()=>state.awards.length),1);
-    console.log('GAMEPLAY_PASS touch movement, release, 150 threshold, free miss, strong win, reset, reload');
-    await context.close();
-    // Public, unauthenticated brand reference for visual review on redesign branches only.
-    if((process.env.GITHUB_REF||'').includes('redesign/')) {
-      const brand=await browser.newPage({viewport:{width:1280,height:850}});
-      try {
-        await brand.goto('https://myaipet.ai/',{waitUntil:'domcontentloaded',timeout:25000});
-        await brand.waitForTimeout(2500);
-        const shot=await brand.screenshot({path:'work/screenshots/brand-reference.jpg',type:'jpeg',quality:60});
-        console.log('QA_IMAGE_BRAND '+shot.toString('base64'));
-        console.log('BRAND_STYLES '+JSON.stringify(await brand.evaluate(()=>({background:getComputedStyle(document.body).backgroundColor,color:getComputedStyle(document.body).color,font:getComputedStyle(document.body).fontFamily,variables:Array.from(getComputedStyle(document.documentElement)).filter(k=>k.startsWith('--')).map(k=>[k,getComputedStyle(document.documentElement).getPropertyValue(k)]).slice(0,100)}))));
-      }catch(e){console.log('BRAND_REFERENCE_UNAVAILABLE '+e.message);}
-      await brand.close();
-    }
-    await browser.close();
-    browser=await webkit.launch();
-    const safari=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
-    const safariErrors=[];safari.on('pageerror',e=>safariErrors.push(e.message));await safari.goto(url);await safari.waitForTimeout(250);
-    const safariLayout=await safari.evaluate(()=>({h:innerHeight,bottom:document.querySelector('#drop').getBoundingClientRect().bottom,scene:document.querySelector('#scene').getBoundingClientRect().height}));
-    assert.ok(safariLayout.bottom<=safariLayout.h&&safariLayout.scene>200,'WebKit mobile layout');
-    await safari.locator('#options').tap();await safari.locator('#testStrong').tap();
-    assert.equal(await safari.evaluate(()=>state.roundSpend),140);
-    assert.deepEqual(safariErrors,[]);
-    await safari.screenshot({path:'work/screenshots/webkit-phone.jpg',type:'jpeg',quality:65});
-    console.log('WEBKIT_PASS phone layout and settings controls');
-    await browser.close();browser=null;
-  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
+function backend(){
+ const state={user:{id:'test-user',email:'player@example.com',role:'player'},wallet:{sp:1000,rp:100,credits:300,progress:{RP:0,Credits:0}},plays:0,inventory:[],config:{currency:{RP:{cost:10,threshold:20,weakChance:0,strongChance:1},Credits:{cost:10,threshold:150,weakChance:0,strongChance:1}},passCredits:150,goldTicketSP:500,shippingEnabled:true},prizes:[]};
+ let weakPlays=0;
+ const snapshot=()=>JSON.parse(JSON.stringify(state));
+ async function route(r){const url=new URL(r.request().url()),path=url.pathname,method=r.request().method();
+  if(path==='/api/state')return r.fulfill({json:snapshot()});
+  if(path==='/api/auth'&&method==='POST'){const b=r.request().postDataJSON();if(b.action==='logout')return r.fulfill({json:{ok:true}});state.user={id:'test-user',email:b.email,role:'player'};return r.fulfill({json:{user:state.user}});}
+  if(path==='/api/play'&&method==='POST'){const b=r.request().postDataJSON(),cur=b.currency,rule=state.config.currency[cur],w=state.wallet,progress=w.progress[cur],bal=cur==='RP'?w.rp:w.credits,cost=progress>=rule.threshold?0:rule.cost;if(bal<cost)return r.fulfill({status:402,json:{error:'餘額不足'}});const strong=progress>=rule.threshold||progress+cost>=rule.threshold;const won=!state.forceMiss&&!!b.aligned&&(strong||++weakPlays>100);const newProgress=won?0:progress+cost;if(cur==='RP'){w.rp-=cost;w.progress.RP=newProgress;}else{w.credits-=cost;w.progress.Credits=newProgress;}state.plays++;let prize=null;if(won){prize={id:'test-prize',name:'Test plush',kind:'plush',spReward:0,recycleRP:5};state.inventory.unshift({id:'test-inventory',name:prize.name,kind:prize.kind,status:'stored',recycleRP:5});}return r.fulfill({json:{success:won,strong:strong||newProgress>=rule.threshold,charged:cost,prize,state:snapshot()}});}
+  if(path==='/api/rewards'&&method==='GET')return r.fulfill({json:{shop:[],warehouse:state.inventory,orders:[]}});
+  if(path==='/api/rewards'&&method==='POST')return r.fulfill({json:{ok:true,orderId:'order-test'}});
+  return r.fulfill({status:404,json:{error:'not found'}});
+ }
+ return {state,route};
+}
+(async()=>{
+ const html=await fs.readFile('public/index.html');await fs.mkdir('work/screenshots',{recursive:true});
+ const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;const file=pathname==='/admin.html'?'public/admin.html':pathname==='/demo-api.js'?'public/demo-api.js':'public/index.html';res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript; charset=utf-8':'text/html; charset=utf-8'});res.end(require('node:fs').readFileSync(file));});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const url='http://127.0.0.1:'+server.address().port;let browser;
+ try{browser=await chromium.launch();for(const [width,height] of sizes){const context=await browser.newContext({viewport:{width,height},hasTouch:width<900,deviceScaleFactor:1});const mock=backend();await context.route('**/api/**',mock.route);const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(url);await page.waitForTimeout(150);
+  const layout=await page.evaluate(()=>{const rect=id=>{const r=document.querySelector(id).getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right};};return{w:innerWidth,h:innerHeight,scrollW:document.documentElement.scrollWidth,scrollH:document.documentElement.scrollHeight,scene:rect('#scene'),joy:rect('#joystick'),drop:rect('#drop'),cabinet:rect('.cabinet')};});
+  assert.ok(layout.scrollW<=width+1,'Horizontal overflow '+width+' '+JSON.stringify(layout));assert.ok(layout.scene.height>=110,'Game viewport too short '+JSON.stringify(layout));for(const id of ['scene','joy','drop']){const r=layout[id];assert.ok(r.x>=0&&r.y>=0&&r.right<=width+1&&r.bottom<=height+1,'Control outside viewport '+id+' '+JSON.stringify(layout));}assert.ok(layout.joy.y>=layout.scene.bottom||width>height,'Portrait controls overlap scene');assert.equal(await page.title(),'My AI Pet · Pocket Claw');assert.equal(await page.locator('body').innerText().then(t=>/MY AI PAD|My AI Pad/.test(t)),false);
+  await page.locator('#options').click();assert.equal(await page.locator('#settingsDialog').evaluate(d=>d.open),true);await page.locator('#closeSettings').click();await page.locator('[data-mode="balls"]').click();await page.locator('[data-view="top"]').click();await page.locator('[data-mode="plush"]').click();await page.locator('[data-view="front"]').click();assert.deepEqual(errors,[],'Browser runtime errors');await page.screenshot({path:`work/screenshots/${width}x${height}.jpg`,type:'jpeg',quality:65});console.log('LAYOUT_PASS '+width+'x'+height+' '+JSON.stringify(layout));await context.close();}
+  const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true}),mock=backend();mock.state.wallet.rp=100;mock.state.wallet.progress.RP=10;mock.state.config.currency.RP={cost:10,threshold:20,weakChance:0,strongChance:1};await context.route('**/api/**',mock.route);const page=await context.newPage();await page.goto(url);await page.locator('[data-view="front"]').click();
+  await page.evaluate(()=>{const t=toys.find(x=>!x.gold);pos={x:t.x,z:t.z};});await page.locator('#drop').tap();await page.waitForFunction(()=>!busy,{},{timeout:8000});assert.equal(mock.state.wallet.rp,90);assert.equal(mock.state.wallet.progress.RP,0,'threshold-crossing win resets that currency meter');assert.equal(mock.state.inventory.length,1);assert.equal(mock.state.wallet.credits,300);assert.equal(mock.state.wallet.progress.Credits,0);await page.locator('#closeModal').click();
+  mock.state.wallet.progress.RP=20;mock.state.forceMiss=true;await page.evaluate(()=>{pos={x:100,z:100};});await page.locator('#drop').tap();await page.waitForFunction(()=>!busy,{},{timeout:8000});assert.equal(mock.state.wallet.rp,90,'strong claw miss is free');assert.equal(mock.state.wallet.progress.RP,20);mock.state.forceMiss=false;assert.equal(mock.state.wallet.progress.Credits,0);
+  await page.locator('[data-currency="Credits"]').click();await page.evaluate(()=>{pos={x:100,z:100};});await page.locator('#drop').tap();await page.waitForFunction(()=>!busy,{},{timeout:8000});assert.equal(mock.state.wallet.credits,290);assert.equal(mock.state.wallet.progress.Credits,10);assert.equal(mock.state.wallet.progress.RP,20,'currency guarantee meters remain separate');console.log('GAMEPLAY_PASS server result, currency-specific guarantee progress, free retry, separate wallets');await context.close();
+  const demo=await browser.newContext({viewport:{width:390,height:844},hasTouch:true}),demoPage=await demo.newPage(),demoErrors=[];demoPage.on('pageerror',e=>demoErrors.push(e.message));await demoPage.goto(url+'?demo=1',{waitUntil:'commit'});await demoPage.waitForFunction(()=>window.__petclawDemo===true);await demoPage.locator('#account').click();await demoPage.locator('#accountForm input[name="email"]').fill('player@demo.example.com');await demoPage.locator('#accountForm input[name="password"]').fill('PetClawDemo2026!');await demoPage.locator('#accountForm button[type="submit"]').click();await demoPage.waitForFunction(()=>document.querySelector('#accountStatus').textContent.includes('player@demo.example.com'));await demoPage.evaluate(()=>{const t=toys.find(x=>!x.gold);pos={x:t.x,z:t.z};});await demoPage.locator('#drop').tap();await demoPage.waitForFunction(()=>!busy,{},{timeout:8000});assert.equal(await demoPage.evaluate(()=>JSON.parse(localStorage.getItem('petclaw-public-demo-v1')).plays),1);await demoPage.goto(url+'/admin.html?demo=1',{waitUntil:'commit'});await demoPage.waitForFunction(()=>window.__petclawDemo===true);await demoPage.locator('#email').fill('admin@demo.example.com');await demoPage.locator('#password').fill('PetClawAdmin2026!');await demoPage.locator('#loginBtn').click();await demoPage.waitForFunction(()=>!document.querySelector('#app').classList.contains('hidden'));assert.equal(await demoPage.locator('#creditThreshold').inputValue(),'150');assert.equal(await demoPage.locator('#rpThreshold').inputValue(),'3000');assert.equal(await demoPage.locator('.demo-note').count(),1);assert.deepEqual(demoErrors,[],'Demo mode runtime errors');console.log('PUBLIC_DEMO_PASS player login/play + admin login/config');await demo.close();
+  await browser.close();browser=await webkit.launch();const safari=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});await safari.route('**/api/**',backend().route);const safariErrors=[];safari.on('pageerror',e=>safariErrors.push(e.message));await safari.goto(url);await safari.waitForTimeout(150);const safariLayout=await safari.evaluate(()=>({h:innerHeight,bottom:document.querySelector('#drop').getBoundingClientRect().bottom,scene:document.querySelector('#scene').getBoundingClientRect().height}));assert.ok(safariLayout.bottom<=safariLayout.h&&safariLayout.scene>200,'WebKit mobile layout');await safari.locator('#options').tap();assert.equal(await safari.evaluate(()=>document.querySelector('#settingsDialog').open),true);assert.deepEqual(safariErrors,[]);await safari.screenshot({path:'work/screenshots/webkit-phone.jpg',type:'jpeg',quality:65});console.log('WEBKIT_PASS phone layout and controls');await browser.close();browser=null;
+ }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

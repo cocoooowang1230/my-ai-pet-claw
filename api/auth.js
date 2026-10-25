@@ -1,0 +1,13 @@
+const crypto=require('node:crypto');
+const {db,send,method,body,setSession,clearSession,cookieHash,passwordHash,checkPassword,errorResponse}=require('../lib/petclaw');
+module.exports=async(req,res)=>{let c;try{c=await db();method(req,'POST');const b=body(req),action=b.action;
+ if(action==='logout'){const token=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('petclaw_session='))?.slice('petclaw_session='.length);if(token)await c.query('DELETE FROM sessions WHERE token_hash=$1',[cookieHash(decodeURIComponent(token))]);clearSession(res);return send(res,200,{ok:true});}
+ if(action!=='login'&&action!=='signup')return send(res,400,{error:'未知的帳戶操作。'});if(action==='signup'){const cfg=await c.query('SELECT config FROM app_config WHERE id=1');if(cfg.rows[0]?.config.registrationEnabled===false)return send(res,403,{error:'目前暫停新帳戶註冊。'});}
+ const email=String(b.email||'').trim().toLowerCase(),password=String(b.password||'');if(!/^\S+@\S+\.\S+$/.test(email)||password.length<8)return send(res,400,{error:'請輸入有效 Email，密碼至少 8 個字元。'});
+ const isConfiguredAdmin=email===(process.env.ADMIN_EMAIL||'').trim().toLowerCase()&&!!process.env.ADMIN_PASSWORD;const isAdmin=isConfiguredAdmin&&password===process.env.ADMIN_PASSWORD;if(isConfiguredAdmin&&!isAdmin)return send(res,401,{error:'Email 或密碼不正確。'});
+ let user;
+ if(isAdmin){const pw=await passwordHash(password);const q=await c.query(`INSERT INTO users(id,email,password_hash,role) VALUES($1,$2,$3,'admin') ON CONFLICT(email) DO UPDATE SET password_hash=EXCLUDED.password_hash,role='admin' RETURNING id,email,role`,[crypto.randomUUID(),email,pw]);user=q.rows[0];await c.query('INSERT INTO wallets(user_id) VALUES($1) ON CONFLICT DO NOTHING',[user.id]);}
+ else if(action==='signup'){const exists=await c.query('SELECT 1 FROM users WHERE email=$1',[email]);if(exists.rowCount)return send(res,409,{error:'此 Email 已註冊，請改用登入。'});const pw=await passwordHash(password);const q=await c.query("INSERT INTO users(id,email,password_hash) VALUES($1,$2,$3) RETURNING id,email,role",[crypto.randomUUID(),email,pw]);user=q.rows[0];await c.query('INSERT INTO wallets(user_id) VALUES($1)',[user.id]);}
+ else {const q=await c.query('SELECT id,email,role,password_hash FROM users WHERE email=$1',[email]);if(!q.rowCount||!await checkPassword(password,q.rows[0].password_hash))return send(res,401,{error:'Email 或密碼不正確。'});user=q.rows[0];}
+ const token=crypto.randomBytes(32).toString('hex');await c.query('INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval \'30 days\')',[cookieHash(token),user.id]);setSession(res,token);return send(res,200,{user:{id:user.id,email:user.email,role:user.role}});
+}catch(e){errorResponse(res,e);}finally{if(c)await c.end().catch(()=>{});}};
