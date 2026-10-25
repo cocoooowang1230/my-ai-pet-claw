@@ -2,6 +2,7 @@
 (function () {
   if (new URLSearchParams(location.search).get('demo') !== '1') return;
 
+  const basePath = location.pathname.replace(/\/(?:index\.html|admin\.html)?$/, '').replace(/\/$/, '');
   const KEY = 'petclaw-public-demo-v1';
   const PLAYER = { email: 'player@demo.example.com', password: 'PetClawDemo2026!' };
   const ADMIN = { email: 'admin@demo.example.com', password: 'PetClawAdmin2026!' };
@@ -208,6 +209,8 @@
         const note = document.createElement('div'); note.className = 'note demo-note';
         note.innerHTML = '<b>公開演示後台</b><br>管理員帳號：<code>' + ADMIN.email + '</code><br>密碼：<code>' + ADMIN.password + '</code><br>資料只存在此瀏覽器，請勿輸入真實資料。<br>點「重設演示資料」可還原範例。';
         login.prepend(note);
+        const homeLink = document.querySelector('header.top a[aria-label="回到遊戲"]');
+        if (homeLink) homeLink.href = basePath + '/?demo=1';
         const reset = document.createElement('button'); reset.textContent = '重設演示資料'; reset.style.marginTop = '10px';
         reset.onclick = () => { localStorage.removeItem(KEY); location.reload(); };
         login.append(reset);
@@ -222,7 +225,7 @@
         const note = document.createElement('p'); note.className = 'muted demo-note';
         note.innerHTML = '演示帳號：<code>' + PLAYER.email + '</code><br>密碼：<code>' + PLAYER.password + '</code><br>這是公開假資料，請勿輸入真實收件資訊。';
         accountForm.prepend(note);
-        const adminLink = document.querySelector('#modalContent a[href="/admin.html"]'); if (adminLink) adminLink.href = '/admin.html?demo=1';
+        const adminLink = document.querySelector('#modalContent a[href="/admin.html"]'); if (adminLink) adminLink.href = basePath + '/admin.html?demo=1';
       }
     }
   };

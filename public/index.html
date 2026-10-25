@@ -59,7 +59,7 @@ dialog{border:2px solid var(--ink);border-radius:18px;padding:24px;max-width:450
 </main>
 <dialog id="settingsDialog" aria-labelledby="settingsTitle"><div class="modal-head"><h2 id="settingsTitle">遊戲資訊</h2><button id="closeSettings" aria-label="關閉設定">×</button></div><div class="settings-content"><p id="accountStatus" class="muted">正在連線…</p><p>本局使用 RP 或 Credits 的保夾進度分開累積。達到該幣別門檻後，強爪免費重抓直到中獎；中獎後只重置該幣別的進度。</p><p>目前已玩 <b id="plays">0</b> 次。若要管理遊戲機率、保夾門檻、獎品和庫存，請前往 <a href="/admin.html"><b>管理後台</b></a>。</p><p>帳戶、點數、獎品和訂單由伺服器保存；Credits 尚未串接金流，配送訂單需由營運人員人工處理。</p></div></dialog>
 <dialog id="modal" aria-labelledby="modalTitle"><div class="modal-head"><h2 id="modalTitle"></h2><button id="closeModal" aria-label="關閉視窗">×</button></div><div id="modalContent"></div></dialog><div id="toast" role="status"></div><noscript><p class="noscript">請啟用 JavaScript 以操作遊戲。</p></noscript>
-<script src="/demo-api.js"></script><script>
+<script src="./demo-api.js"></script><script>
 const $=s=>document.querySelector(s);
 const fresh=()=>({credits:0,rp:0,plays:0,roundSpend:0,progress:{RP:0,Credits:0},points:0,awards:[],pending:null});
 let state=fresh(), mode='plush', activeCurrency='RP', busy=false, anim=null, last=performance.now(), soundOn=false, currentUser=null, remoteReady=false, backendMessage='正在連接遊戲服務…', gameConfig={currency:{RP:{cost:300,threshold:3000,weakChance:.1,strongChance:1},Credits:{cost:10,threshold:150,weakChance:.1,strongChance:1}}}, shopItems=[];

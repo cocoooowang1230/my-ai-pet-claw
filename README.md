@@ -40,6 +40,8 @@ node --check api/admin.js
 
 ## 可分享的公開演示模式
 
+GitHub Pages 公開入口：https://cocoooowang1230.github.io/my-ai-pet-claw/?demo=1；管理後台：https://cocoooowang1230.github.io/my-ai-pet-claw/admin.html?demo=1。
+
 - 玩家入口：`/?demo=1`。測試帳號 `player@demo.example.com`，密碼 `PetClawDemo2026!`。
 - 管理後台：`/admin.html?demo=1`。測試帳號 `admin@demo.example.com`，密碼 `PetClawAdmin2026!`。
 - 演示模式不呼叫正式 API 或資料庫；每位訪客的狀態只存在自己的瀏覽器 `localStorage`，可在管理員登入畫面按「重設演示資料」還原（若已登入，先登出）。
