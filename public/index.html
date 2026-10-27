@@ -38,7 +38,8 @@ dialog{border:2px solid var(--ink);border-radius:18px;padding:24px;max-width:450
 }
 .currency-picker{display:flex;align-items:center;gap:4px;min-width:0}.currency-picker button{display:flex;align-items:center;gap:5px;padding:4px 8px;font-size:9px;line-height:1.1;white-space:nowrap;background:#f9f5eb;border-color:#c6c2b5}.currency-picker button.active{background:#2a251e;color:#fff8e9;border-color:#2a251e}.currency-picker b{font:700 11px ui-monospace,monospace}.utility #rewards,.utility #account{font-size:9px;padding:5px 7px;min-height:31px;white-space:nowrap}.utility #account{font-weight:700}.progress-head #guaranteeLabel{color:inherit}.currency-picker button:disabled{opacity:.55}
 @media(max-width:360px){.utility #rewards{display:none}.currency-picker{gap:2px}.currency-picker button{padding:4px 5px;font-size:8px}.currency-picker b{font-size:9px}}
-</style></head><body>
+@media(min-width:1181px){.arcade-page{max-width:1800px;grid-template-columns:minmax(220px,.62fr) minmax(0,1.8fr) minmax(185px,.52fr);gap:clamp(18px,2vw,36px);padding:16px clamp(22px,2vw,36px)}.cabinet{height:clamp(650px,calc(100dvh - 32px),960px);padding:20px 24px 15px;grid-template-rows:46px 42px 40px minmax(0,1fr) 58px 142px 25px;gap:7px}.cabinet-brand{font-size:21px}.cabinet-brand .paw-mark{width:38px;height:38px}.utility{gap:8px}.utility button{font-size:12px;min-height:38px;padding:7px 12px}.screen-frame{grid-template-rows:30px minmax(0,1fr) 38px;padding:0 9px}.screen-top{font-size:9px}.screen-top #force{font-size:10px}.views button{font-size:11px;padding:5px 12px;min-height:30px}.progress-head{font-size:11px}.progress-head strong,#progressText{font-size:12px}.track{height:7px}.stick-surround{width:150px;height:132px}#joystick{width:112px;height:112px}#knob{width:60px;height:60px}.control-deck{grid-template-columns:1fr .55fr 1fr}.grab-control #drop{width:100px;height:100px;font-size:23px}.grab-control #cost{font-size:11px}.scene-label{font-size:11px;padding:6px 10px}}
+@media(min-width:761px) and (max-width:1180px) and (min-height:521px){.arcade-page{grid-template-columns:minmax(165px,.55fr) minmax(0,1.7fr);max-width:1120px;padding:18px clamp(18px,2.4vw,28px);gap:clamp(16px,2vw,24px)}.cabinet{height:clamp(630px,calc(100dvh - 38px),920px)}}</style></head><body>
 <main class="arcade-page" id="play">
 <aside class="intro">
 <a class="wordmark" href="https://myaipet.ai/" target="_blank" rel="noopener"><span class="paw-mark" aria-hidden="true">✳<img class="brand-image" src="https://myaipet.ai/hero-mascot.jpg" alt="" onerror="this.hidden=true"></span> MY AI PET<span class="beta">PLAY</span></a>
@@ -121,7 +122,7 @@ $('#topup')?.remove();
 $('#sound').onclick=()=>{soundOn=!soundOn;$('#sound').textContent=soundOn?'音效：開':'音效：關';$('#sound').setAttribute('aria-pressed',String(soundOn));beep(true);};
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(busy)return;mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});$('#modeLabel').textContent=mode==='plush'?'PET COLLECTION':'MYSTERY CAPSULES';toys=makePile();});
 const canvas=$('#scene'),ctx=canvas.getContext('2d');
-let W=1,H=1,DPR=1,angle=-.38,elevation=.2,distance=8.6,pos={x:0,z:0},move={x:0,z:0},keys=new Set(),orbit=null;
+let W=1,H=1,DPR=1,angle=-.38,elevation=.2,distance=7.8,pos={x:0,z:0},move={x:0,z:0},keys=new Set(),orbit=null;
 const colors=['#dfb079','#efe0c5','#afbda0','#c8b5d4','#d49b7c'];
 function pilePosition(others){
  let best=null,bestClearance=-1;
