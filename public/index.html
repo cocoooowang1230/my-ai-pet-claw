@@ -122,7 +122,7 @@ $('#topup')?.remove();
 $('#sound').onclick=()=>{soundOn=!soundOn;$('#sound').textContent=soundOn?'音效：開':'音效：關';$('#sound').setAttribute('aria-pressed',String(soundOn));beep(true);};
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(busy)return;mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});$('#modeLabel').textContent=mode==='plush'?'PET COLLECTION':'MYSTERY CAPSULES';toys=makePile();});
 const canvas=$('#scene'),ctx=canvas.getContext('2d');
-let W=1,H=1,DPR=1,angle=-.38,elevation=.2,distance=7.8,pos={x:0,z:0},move={x:0,z:0},keys=new Set(),orbit=null;
+let W=1,H=1,DPR=1,angle=0,elevation=.12,distance=7.8,pos={x:0,z:0},move={x:0,z:0},keys=new Set(),orbit=null;
 const colors=['#dfb079','#efe0c5','#afbda0','#c8b5d4','#d49b7c'];
 function pilePosition(others){
  let best=null,bestClearance=-1;
@@ -152,7 +152,7 @@ function settlePrize(index,won){
 
 function resize(){const r=canvas.getBoundingClientRect();W=Math.max(1,r.width);H=Math.max(1,r.height);DPR=Math.min(devicePixelRatio||1,2);canvas.width=W*DPR;canvas.height=H*DPR;}
 new ResizeObserver(resize).observe(canvas);
-function project(x,y,z){const ca=Math.cos(angle),sa=Math.sin(angle),se=Math.sin(elevation),sx=x*ca-z*sa,depth=x*sa+z*ca,scale=Math.min(W*.21,H*.62),objectScale=Math.min(110,scale*1.05),screenY=H*.5-(y-.6)*scale*.3-depth*scale*(.44+se*.16);return{x:W/2+sx*scale,y:screenY,s:objectScale,d:-depth+(y*.001)};}
+function project(x,y,z){const ca=Math.cos(angle),sa=Math.sin(angle),se=Math.sin(elevation),sx=x*ca-z*sa,depth=x*sa+z*ca,scale=Math.min(W*.14,H*.5),objectScale=Math.min(90,scale*1.05),screenY=H*.6-(y-.6)*scale*.48-depth*scale*(.44+se*.16);return{x:W/2+sx*scale,y:screenY,s:objectScale,d:-depth+(y*.001)};}
 function nearest(plushOnly=false){let best=0,min=Infinity;toys.forEach((t,i)=>{if(plushOnly&&mode==='plush'&&t.gold)return;const d=(t.x-pos.x)**2+(t.z-pos.z)**2;if(d<min){min=d;best=i;}});return best;}
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),mix=(a,b,t)=>a+(b-a)*clamp(t,0,1),ease=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
 let drawList=[];
@@ -184,7 +184,7 @@ function render(now){
  if(!busy&&!modalOpen()){let mx=move.x+(keys.has('ArrowRight')||keys.has('d')?1:0)-(keys.has('ArrowLeft')||keys.has('a')?1:0),mz=move.z+(keys.has('ArrowDown')||keys.has('s')?1:0)-(keys.has('ArrowUp')||keys.has('w')?1:0),mag=Math.max(1,Math.hypot(mx,mz));mx/=mag;mz/=mag;pos.x=clamp(pos.x+(mx*Math.cos(angle)+mz*Math.sin(angle))*dt*1.45,-1.35,1.35);pos.z=clamp(pos.z+(-mx*Math.sin(angle)+mz*Math.cos(angle))*dt*1.45,-1.07,1.07);}
  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
  const bg=ctx.createRadialGradient(W*.45,H*.43,10,W*.5,H*.5,H*.6);bg.addColorStop(0,'#fff8e9');bg.addColorStop(1,'#eadeca');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
- const bed=ctx.createRadialGradient(W*.5,H*.78,2,W*.5,H*.78,W*.48);bed.addColorStop(0,'#8a775022');bed.addColorStop(1,'#8a775000');ctx.fillStyle=bed;ctx.beginPath();ctx.ellipse(W/2,H*.78,W*.48,Math.max(10,H*.2),0,0,Math.PI*2);ctx.fill();
+ const bed=ctx.createRadialGradient(W*.5,H*.76,2,W*.5,H*.76,W*.4);bed.addColorStop(0,'#8a77501c');bed.addColorStop(1,'#8a775000');ctx.fillStyle=bed;ctx.beginPath();ctx.ellipse(W/2,H*.76,W*.4,Math.max(8,H*.16),0,0,Math.PI*2);ctx.fill();
  drawList=[];
  // The full-bleed prize bed replaces the miniature cabinet; keep the screen free of inner walls.
  toys.forEach(toy=>{const shadow=[];for(let n=0;n<16;n++){const q=n/16*Math.PI*2;shadow.push([toy.x+.34*Math.cos(q),.257,toy.z+.23*Math.sin(q)]);}poly(shadow,'#4d493217');});
@@ -194,21 +194,22 @@ function render(now){
 
 
 
- let selected=nearest(),cx=pos.x,cz=pos.z,cy=3.63,grip=1,t=anim?(now-anim.started)/1000:0;
+ let selected=nearest(),cx=pos.x,cz=pos.z,cy=2.9,grip=1,t=anim?(now-anim.started)/1000:0;
  if(anim){const target=toys[anim.index];cx=anim.from.x;cz=anim.from.z;
  const reach=target.y+.51;
- if(t<1.25)cy=mix(3.63,reach,ease(t/1.25));
+ if(t<1.25)cy=mix(2.9,reach,ease(t/1.25));
  else if(t<1.8){cy=reach;grip=1-ease((t-1.25)/.55);}
- else if(t<3){cy=mix(reach,3.63,ease((t-1.8)/1.2));grip=0;}
- else{cy=3.63;grip=t>4.3?ease((t-4.3)/.35):0;if(anim.award){cx=mix(anim.from.x,-1.22,ease((t-3)/1.2));cz=mix(anim.from.z,1.07,ease((t-3)/1.2));}}
+ else if(t<3){cy=mix(reach,2.9,ease((t-1.8)/1.2));grip=0;}
+ else{cy=2.9;grip=t>4.3?ease((t-4.3)/.35):0;if(anim.award){cx=mix(anim.from.x,-1.22,ease((t-3)/1.2));cz=mix(anim.from.z,1.07,ease((t-3)/1.2));}}
  selected=anim.index;}
- const target=toys[selected];const aligned=Math.hypot(target.x-pos.x,target.z-pos.z)<=.30;let ring=[];for(let i=0;i<=40;i++){let q=i/40*Math.PI*2;ring.push([pos.x+.30*Math.cos(q),.27,pos.z+.30*Math.sin(q)]);}line(ring,aligned?'#b27a22':'#a98a58',2);line([[pos.x,3.07,pos.z],[pos.x,.28,pos.z]],'#8c6b393d',.75);
+ const target=toys[selected];const aligned=Math.hypot(target.x-pos.x,target.z-pos.z)<=.30;let ring=[];for(let i=0;i<=40;i++){let q=i/40*Math.PI*2;ring.push([pos.x+.30*Math.cos(q),.27,pos.z+.30*Math.sin(q)]);}line([[pos.x,3.07,pos.z],[pos.x,.28,pos.z]],'#8c6b393d',.75);
  toys.forEach((toy,i)=>{let x=toy.x,y=toy.y,z=toy.z,r=toy.rotation;if(anim&&anim.aligned&&i===anim.index&&t>1.65){if(anim.award){if(t<4.4){x=cx;y=cy-.43;z=cz;}else{x=-1.22;z=1.07;y=mix(3.2,-.5,ease((t-4.4)/.55));if(y<.2)return;}}else if(t<2.55){y=cy-.43;r=toy.rotation+Math.sin(t*13)*.15;}else if(t<3.1){y=mix(2.4,toy.y,ease((t-2.55)/.5));r=toy.rotation+Math.sin(t*12)*.2;}}drawToy(toy,x,y,z,r);});
- line([[-2.35,4.12,cz],[2.35,4.12,cz]],'#8c7654',5);box(cx,4.04,cz,.38,.18,.35,'#5c482f');line([[cx,4.03,cz],[cx,cy+.18,cz]],'#9b8664',3);
+ line([[-1.55,4.12,cz],[1.55,4.12,cz]],'#8c7654',5);box(cx,4.04,cz,.38,.18,.35,'#5c482f');line([[cx,4.03,cz],[cx,cy+.18,cz]],'#9b8664',3);
  for(let i=0;i<3;i++){let q=i*Math.PI*2/3,spread=.18+grip*.22;line([[cx,cy,cz],[cx+Math.cos(q)*.34,cy-.22,cz+Math.sin(q)*.34],[cx+Math.cos(q)*spread,cy-.51,cz+Math.sin(q)*spread]],'#8d7854',5);}
  box(cx,cy+.03,cz,.3,.2,.3,'#c8b184');
  drawList.sort((a,b)=>b.d-a.d).forEach(c=>c.draw());
- const label=project(0,4.38,1.58);ctx.fillStyle='#564024';ctx.textAlign='center';ctx.font='800 '+Math.max(10,label.s*.13)+'px system-ui';ctx.fillText('PET',label.x,label.y+4);
+ const aim=ring.map(p=>project(...p));ctx.beginPath();aim.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.strokeStyle=aligned?'#9a651c':'#866b3f';ctx.lineWidth=Math.max(2,W*.003);ctx.stroke();const center=project(pos.x,.27,pos.z);ctx.beginPath();ctx.arc(center.x,center.y,Math.max(2,W*.004),0,Math.PI*2);ctx.fillStyle='#fff4d4';ctx.fill();ctx.strokeStyle='#866b3f';ctx.lineWidth=1.5;ctx.stroke();
+ const label=project(0,4.3,0);ctx.fillStyle='#564024';ctx.textAlign='center';ctx.font='800 '+Math.max(10,label.s*.13)+'px system-ui';ctx.fillText('PET',label.x,label.y+4);
 
  if(!busy){$('#target').textContent=!aligned?'移動光圈，對準獎品':mode==='balls'?'已瞄準：驚喜球':target.gold?'已瞄準：金色積分券':'已瞄準：My AI Pet 玩偶';$('#target').classList.toggle('locked',aligned);}
  if(anim&&t>5.1){const result=anim;if(result.aligned)settlePrize(result.index,!!result.award);anim=null;busy=false;pos={x:0,z:0};$('#status').textContent='準備好，遇見你的 AI 夥伴';update();if(result.award){beep(true);awardScreen(result.award,mode==='balls');}else{beep();toast(!result.aligned?(result.strong?'抓空了！強爪持續中，對準獎品再試。':'抓空了，移動光圈對準獎品中心。'):'爪子鬆開了… 保夾消費已累積。');}}
@@ -228,6 +229,7 @@ async function drop(){
 $('#drop').onclick=drop;
 document.querySelectorAll('[data-currency]').forEach(b=>b.onclick=()=>{if(busy)return;activeCurrency=b.dataset.currency;state.roundSpend=state.progress[activeCurrency]||0;update();});
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const views={front:[0,.12],left:[-Math.PI/2,.15],right:[Math.PI/2,.15],top:[0,1.38],bottom:[0,-1.05]};[angle,elevation]=views[b.dataset.view];document.querySelectorAll('[data-view]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});});
+document.querySelector('[data-view="front"]').classList.add('active');document.querySelector('[data-view="front"]').setAttribute('aria-pressed','true');
 canvas.onpointerdown=e=>{orbit={x:e.clientX,y:e.clientY,a:angle,e:elevation};canvas.setPointerCapture(e.pointerId);};
 canvas.onpointermove=e=>{if(orbit){angle=orbit.a-(e.clientX-orbit.x)*.009;elevation=clamp(orbit.e+(e.clientY-orbit.y)*.007,-1.4,1.4);document.querySelectorAll('[data-view]').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false');});}};
 canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=()=>orbit=null;
