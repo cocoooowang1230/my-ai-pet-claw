@@ -102,6 +102,7 @@
       const aligned = body.aligned === true;
       const won = aligned && Math.random() < Number(strongThisPlay ? rule.strongChance : rule.weakChance);
       let prize = null;
+      let wonInventoryId = null;
       if (won) {
         const total = pool.reduce((sum, item) => sum + Math.max(1, Number(item.weight)), 0);
         let pick = Math.random() * total;
@@ -114,7 +115,8 @@
         prize.stock--;
         const spReward = Number(prize.sp_reward) > 0 ? Number(prize.sp_reward) : Number(data.config.goldTicketSP) || 0;
         if (prize.kind === 'ticket' || Number(prize.sp_reward) > 0) data.wallet.sp += spReward;
-        data.inventory.unshift({ id: id(), name: prize.name, kind: prize.kind, prize_id: prize.id, status: 'stored', created_at: now(), recycle_rp: prize.recycle_rp, recycleRP: prize.recycle_rp });
+        wonInventoryId = id();
+        data.inventory.unshift({ id: wonInventoryId, name: prize.name, kind: prize.kind, prize_id: prize.id, status: 'stored', created_at: now(), recycle_rp: prize.recycle_rp, recycleRP: prize.recycle_rp });
       }
       data.playLog.unshift({ id: id(), created_at: now(), email: data.user.email, currency, cost, strong: strongThisPlay, success: !!prize, prize_name: prize?.name || null });
       persist();
@@ -122,7 +124,7 @@
         success: !!prize,
         strong: strongThisPlay || data.wallet.progress[currency] >= Number(rule.threshold),
         charged: cost,
-        prize: prize ? { id: prize.id, name: prize.name, kind: prize.kind, spReward: Number(prize.sp_reward) || Number(data.config.goldTicketSP) || 0, recycleRP: Number(prize.recycle_rp), image_data: prize.image_data || '', display_style: prize.display_style || '3d' } : null,
+        prize: prize ? { id: prize.id, inventoryId: wonInventoryId, name: prize.name, kind: prize.kind, spReward: Number(prize.sp_reward) || Number(data.config.goldTicketSP) || 0, recycleRP: Number(prize.recycle_rp), image_data: prize.image_data || '', display_style: prize.display_style || '3d' } : null,
         state: snapshot()
       });
     }
@@ -131,7 +133,7 @@
       if (method === 'GET') return result({
         shop: data.prizes.filter(p => p.active).map(p => ({ id: p.id, name: p.name, kind: p.kind, stock: p.stock, recycle_rp: p.recycle_rp, price_rp: p.price_rp, pool_rp: p.pool_rp, pool_credits: p.pool_credits })),
         warehouse: structuredClone(data.inventory),
-        orders: structuredClone(data.orders).map(o => ({ id: o.id, status: o.status, created_at: o.created_at }))
+        orders: structuredClone(data.orders).map(o => ({ id: o.id, status: o.status, created_at: o.created_at, recipient:o.recipient, phone:o.phone, address:o.address, email:o.email, inventory_ids:o.inventory_ids }))
       });
       if (body.action === 'redeem') {
         const prize = data.prizes.find(p => p.id === body.prizeId && p.active && p.stock > 0);

@@ -119,12 +119,12 @@ dialog.addEventListener('close',()=>{content.replaceChildren();state.pending=nul
 function awardScreen(a,capsule=false){
  if(capsule){show('你的驚喜球到了！','<div class="capsule-reveal"><span>?</span></div><p class="center muted">打開它，看看今天遇見誰。</p><button class="primary wide" id="reveal">打開驚喜球</button>');$('#reveal').onclick=()=>awardScreen(a,false);return;}
  const title=safeText(a.name||'MY AI PET 獎品'),isTicket=a.type==='gold',isPhysical=a.type==='plush',points=Number(a.spReward)||0;
- show(isTicket?'金色的幸運，屬於你。':isPhysical?'新的 AI 夥伴，準備回家。':'你獲得一項獎勵。','<div class="reward-art">'+(isTicket?ticket.replace('+500','+'+points.toLocaleString()):isPhysical?mascot:'🎁')+'</div><p class="center"><b>'+title+'</b></p>'+(isTicket&&points?'<p class="center">'+points.toLocaleString()+' SP 已加入帳戶</p>':'')+'<p class="center muted">已放入「我的獎品倉庫」</p><button class="primary wide" id="awardAction">'+(isPhysical&&!a.claimed?'填寫寄送資料':'查看獎品倉庫')+'</button>');
+ show(isTicket?'金色的幸運，屬於你。':isPhysical?'新的 AI 夥伴，準備回家。':'你獲得一項獎勵。','<div class="reward-art">'+(isTicket?ticket.replace('+500','+'+points.toLocaleString()):a.imageData?'<img src="'+a.imageData+'" alt="'+title+'" style="max-width:100%;max-height:180px;object-fit:contain;border-radius:14px">':isPhysical?mascot:'🎁')+'</div><p class="center"><b>'+title+'</b></p>'+(isTicket&&points?'<p class="center">'+points.toLocaleString()+' SP 已加入帳戶</p>':'')+'<p class="center muted">已放入「我的獎品倉庫」</p><button class="primary wide" id="awardAction">'+(isPhysical&&!a.claimed?'填寫寄送資料':'查看獎品倉庫')+'</button>');
  $('#awardAction').onclick=()=>{if(isPhysical&&!a.claimed)shipping(a);else dialog.close();};
 }
 function shipping(a){
  show('申請寄送實體獎品','<p class="muted">請確認收件資訊。此表單會建立待處理訂單，並由營運人員確認出貨。</p><form id="shipForm"><label>收件人<input name="recipient" required maxlength="80" autocomplete="name"></label><label>聯絡電話<input name="phone" required maxlength="40" type="tel" autocomplete="tel"></label><label>收件地址<textarea name="address" required maxlength="500" autocomplete="street-address"></textarea></label><button class="primary wide" type="submit">送出寄送申請</button></form>');
- $('#shipForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{await api('rewards',{method:'POST',body:JSON.stringify({action:'ship',inventoryIds:[a.id],recipient:f.get('recipient'),phone:f.get('phone'),address:f.get('address')})});await refreshState();show('寄送申請已送出','<p>訂單已建立，後續將由營運人員確認配送。</p><button id="done" class="primary wide">完成</button>');$('#done').onclick=()=>dialog.close();}catch(err){toast(err.message);}};
+ $('#shipForm').onsubmit=async e=>{e.preventDefault();const button=e.currentTarget.querySelector('[type="submit"]');if(button.disabled)return;button.disabled=true;button.textContent='正在送出…';const f=new FormData(e.currentTarget);try{const submitted=await api('rewards',{method:'POST',body:JSON.stringify({action:'ship',inventoryIds:[a.id],recipient:f.get('recipient'),phone:f.get('phone'),address:f.get('address')})});await refreshState();show('寄送申請已送出','<div class="center"><p class="reward-success-mark" aria-hidden="true">✓</p><p><b>'+safeText(a.name||'實體獎品')+'</b> 已建立配送申請。</p><p>訂單編號：<b>'+safeText(submitted.orderId||'已記錄')+'</b></p><p class="muted">後台已收到收件資料，營運人員確認後會更新配送進度。</p></div><button id="done" class="primary wide">查看訂單狀態</button>');$('#done').onclick=()=>showPrizes('warehouse');}catch(err){button.disabled=false;button.textContent='送出寄送申請';toast(err.message);}};
 }
 function safeText(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function showPrizes(tab='warehouse'){if(!currentUser){accountDialog();return;}let d;try{d=await api('rewards');}catch(e){toast(e.message);return;}show('獎勵與兌換','<div class="modal-head"><button id="shopTab">Gift Shop</button><button id="warehouseTab">我的獎品倉庫</button></div><div id="rewardContent"></div>');$('#shopTab').onclick=()=>showPrizes('shop');$('#warehouseTab').onclick=()=>showPrizes('warehouse');const root=$('#rewardContent');
@@ -216,18 +216,19 @@ function render(now){
  let selected=nearest(),cx=pos.x,cz=pos.z,cy=2.9,grip=0,t=anim?(now-anim.started)/1000:0;
  if(anim){const target=toys[anim.index]||toys[selected];cx=anim.from.x;cz=anim.from.z;
  const reach=target.y+.51;
- if(t<.32){cy=2.9;grip=0;}
- else if(t<1.2){cy=mix(2.9,reach,ease((t-.32)/.88));grip=0;}
- else if(t<1.48){cy=reach;grip=ease((t-1.2)/.28);}
- else if(t<1.76){cy=reach;grip=1;}
- else if(t<2.28){cy=mix(reach,2.9,ease((t-1.76)/.52));grip=.88;}
- else if(t<2.92){const progress=ease((t-2.28)/.64);cx=mix(anim.from.x,-1.22,progress);cz=mix(anim.from.z,1.07,progress);cy=2.9;grip=.88;}
- else{cx=-1.22;cz=1.07;cy=2.9;grip=t<3.24?1-ease((t-2.92)/.32):0;}
+ // grip is physical claw openness: 1 = fully open, 0 = closed.
+ if(t<.32){cy=2.9;grip=1;}
+ else if(t<1.2){cy=mix(2.9,reach,ease((t-.32)/.88));grip=1;}
+ else if(t<1.48){cy=reach;grip=1-ease((t-1.2)/.28);}
+ else if(t<1.76){cy=reach;grip=0;}
+ else if(t<2.28){cy=mix(reach,2.9,ease((t-1.76)/.52));grip=.12;}
+ else if(t<2.92){const progress=ease((t-2.28)/.64);cx=mix(anim.from.x,-1.22,progress);cz=mix(anim.from.z,1.07,progress);cy=2.9;grip=.12;}
+ else{cx=-1.22;cz=1.07;cy=2.9;grip=t<3.24?mix(.12,1,ease((t-2.92)/.32)):1;}
  selected=anim.index;}
  const target=toys[selected];const aligned=Math.hypot(target.x-pos.x,target.z-pos.z)<=.30;let ring=[];for(let i=0;i<=40;i++){let q=i/40*Math.PI*2;ring.push([pos.x+.30*Math.cos(q),.27,pos.z+.30*Math.sin(q)]);}if(!photoReady)line([[pos.x,3.07,pos.z],[pos.x,.28,pos.z]],'#8c6b393d',.75);
  if(!photoReady){toys.forEach((toy,i)=>{let x=toy.x,y=toy.y,z=toy.z,r=toy.rotation;if(anim&&anim.aligned&&i===anim.index&&t>1.44){if(anim.award){if(t<2.9){x=cx;y=cy-.43;z=cz;}else if(t<3.25){x=-1.22;z=1.07;y=mix(2.45,-.12,ease((t-2.9)/.35));r=toy.rotation+(t-2.9)*2;if(y<.25)return;}else return;}else if(t<2.75){y=cy-.43;r=toy.rotation+Math.sin(t*19)*.18;}else if(t<3.2){y=mix(2.1,toy.y,ease((t-2.75)/.45));r=toy.rotation+Math.sin(t*16)*.22;}}drawToy(toy,x,y,z,r);});
  line([[-1.55,4.12,cz],[1.55,4.12,cz]],'#8c7654',5);box(cx,4.04,cz,.38,.18,.35,'#5c482f');line([[cx,4.03,cz],[cx,cy+.18,cz]],'#9b8664',3);
- for(let i=0;i<3;i++){let q=i*Math.PI*2/3,spread=.18+grip*.22;line([[cx,cy,cz],[cx+Math.cos(q)*.34,cy-.22,cz+Math.sin(q)*.34],[cx+Math.cos(q)*spread,cy-.51,cz+Math.sin(q)*spread]],'#8d7854',5);}
+ for(let i=0;i<3;i++){let q=i*Math.PI*2/3,spread=.18+(1-grip)*.22;line([[cx,cy,cz],[cx+Math.cos(q)*.34,cy-.22,cz+Math.sin(q)*.34],[cx+Math.cos(q)*spread,cy-.51,cz+Math.sin(q)*spread]],'#8d7854',5);}
  box(cx,cy+.03,cz,.3,.2,.3,'#c8b184');}
  drawList.sort((a,b)=>b.d-a.d).forEach(c=>c.draw());
  const aim=ring.map(p=>project(...p));ctx.beginPath();aim.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.strokeStyle=aligned?'#9a651c':'#866b3f';ctx.lineWidth=Math.max(2,W*.003);ctx.stroke();const center=project(pos.x,.27,pos.z);ctx.beginPath();ctx.arc(center.x,center.y,Math.max(2,W*.004),0,Math.PI*2);ctx.fillStyle='#fff4d4';ctx.fill();ctx.strokeStyle='#866b3f';ctx.lineWidth=1.5;ctx.stroke();
@@ -249,7 +250,7 @@ async function drop(){
  const ruleStrong=Number(rule.threshold)>0&&progress+cost>=Number(rule.threshold);
  anim={award:null,strong:ruleStrong,cost,aligned,index,roundSpend:progress+cost,started:performance.now(),from:{...pos},resolved:false};
  $('#status').textContent='爪子張開中… 正在瞄準獎品';beep();
- try{const data=await api('play',{method:'POST',body:JSON.stringify({currency:activeCurrency,aligned})});const prize=data.prize,kind=prize?.kind,result=prize?{id:prize.id,type:['plush','physical'].includes(kind)?'plush':kind==='ticket'?'gold':'digital',name:prize.name,kind,recycleRP:prize.recycleRP,spReward:prize.spReward,claimed:false}:null;applySnapshot(data.state);if(result){const prizeIndex=toys.findIndex(toy=>toy.prizeId===prize.id);if(prizeIndex>=0)anim.index=prizeIndex;}anim.award=result;anim.strong=data.strong;anim.cost=data.charged;anim.roundSpend=data.state?.wallet?.progress?.[activeCurrency]||0;anim.resolved=true;$('#status').textContent=data.strong?'強爪出動 · 爪子正在收回':'正在收回爪子…';}
+ try{const data=await api('play',{method:'POST',body:JSON.stringify({currency:activeCurrency,aligned})});const prize=data.prize,kind=prize?.kind,result=prize?{id:prize.inventoryId||prize.inventory_id,prizeId:prize.id,type:['plush','physical'].includes(kind)?'plush':kind==='ticket'?'gold':'digital',name:prize.name,kind,imageData:prize.imageData||prize.image_data||'',displayStyle:prize.displayStyle||prize.display_style||'3d',recycleRP:prize.recycleRP,spReward:prize.spReward,claimed:false}:null;applySnapshot(data.state);if(result){const prizeIndex=toys.findIndex(toy=>toy.prizeId===prize.id);if(prizeIndex>=0)anim.index=prizeIndex;}anim.award=result;anim.strong=data.strong;anim.cost=data.charged;anim.roundSpend=data.state?.wallet?.progress?.[activeCurrency]||0;anim.resolved=true;$('#status').textContent=data.strong?'強爪出動 · 爪子正在收回':'正在收回爪子…';}
  catch(e){busy=false;anim=null;await refreshState();toast(e.message);}
 }
 $('#drop').onclick=drop;
@@ -263,11 +264,13 @@ joy.onpointermove=e=>{if(joyActive)stick(e);};
 function release(){joyActive=false;move={x:0,z:0};knob.style.transform='';}
 joy.onpointerup=joy.onpointercancel=joy.onlostpointercapture=release;
 document.querySelectorAll('[data-dir]').forEach(b=>{b.onpointerdown=e=>{if(busy||modalOpen())return;e.preventDefault();const m={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.dir];move={x:m[0],z:m[1]};b.setPointerCapture(e.pointerId);};b.onpointerup=b.onpointercancel=b.onlostpointercapture=release;b.onclick=e=>{if(e.detail===0&&!busy&&!modalOpen()){const m={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.dir],a=window.clawMachine3D?.getAngle?.()??angle;pos.x=clamp(pos.x+.2*(m[0]*Math.cos(a)+m[1]*Math.sin(a)),-1.35,1.35);pos.z=clamp(pos.z+.2*(-m[0]*Math.sin(a)+m[1]*Math.cos(a)),-1.07,1.07);}};});
-window.addEventListener('keydown',e=>{if(modalOpen()||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;let k=e.key.length===1?e.key.toLowerCase():e.key;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(k)){controlsEngaged=true;e.preventDefault();keys.add(k);}if(e.code==='Space'){if(document.activeElement.tagName==='BUTTON'&&document.activeElement.id!=='drop'&&!controlsEngaged)return;e.preventDefault();if(!e.repeat)drop();}});
+window.addEventListener('keydown',e=>{if(modalOpen()||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;let k=e.key.length===1?e.key.toLowerCase():e.key;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(k)){controlsEngaged=true;e.preventDefault();keys.add(k);}if(e.code==='Space'){if(document.activeElement.isContentEditable)return;e.preventDefault();if(!e.repeat)drop();}});
 window.addEventListener('keyup',e=>keys.delete(e.key.length===1?e.key.toLowerCase():e.key));
 window.addEventListener('blur',()=>{keys.clear();release();orbit=null;});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();release();}});
 update();resize();requestAnimationFrame(render);refreshState();
+setInterval(()=>{if(!document.hidden&&!busy&&!modalOpen())refreshState();},8000);
+window.addEventListener('focus',()=>{if(!busy&&!modalOpen())refreshState();});
 const pending=state.awards.find(a=>a.id===state.pending);if(pending)awardScreen(pending);
 
 </script><script type="module" src="./claw-scene.js"></script></body></html>

@@ -293,8 +293,8 @@ try {
       prizeRoot.remove(object);
     }
     prizeMeshes = toys.map((toy, i) => {
-      const showImage = mode !== 'balls' && !!toy.imageData && ['plush', 'physical'].includes(toy.kind);
-      const object = mode === 'balls' ? makeCapsule(toy, i) : toy.gold ? makeTicket() : showImage ? makeImagePrize(toy, i, toy.displayStyle !== '2d') : makePlush(toy, i);
+      const showImage = !!toy.imageData && ['plush', 'physical'].includes(toy.kind);
+      const object = mode === 'balls' && !showImage ? makeCapsule(toy, i) : toy.gold ? makeTicket() : showImage ? makeImagePrize(toy, i, toy.displayStyle !== '2d') : makePlush(toy, i);
       object.userData.index = i;
       object.userData.prizeId = toy.prizeId;
       if (showImage) {
@@ -423,7 +423,8 @@ try {
     const cableLength = Math.max(0.08, 4.0 - clawY);
     cable.scale.y = cableLength;
     cable.position.set(0, (4.0 + clawY) / 2, 0);
-    const spread = 1 - Math.max(0, Math.min(1, state.grip)) * 0.42;
+    // Game state uses 1 = open and 0 = closed; preserve a visible aperture.
+    const spread = 0.58 + Math.max(0, Math.min(1, state.grip)) * 0.42;
     armRoot.scale.set(spread, 1, spread);
     if (cameraTween) {
       controls.enabled = false;
