@@ -17,11 +17,11 @@
     registrationEnabled: true
   };
   const DEFAULT_PRIZES = [
-    { id: 'demo-biscuit', name: 'MY AI PET Biscuit 玩偶', kind: 'plush', weight: 8, stock: 20, recycle_rp: 250, price_rp: 1200, sp_reward: 0, pool_rp: true, pool_credits: true, active: true },
-    { id: 'demo-partner', name: '合作寵物吊飾', kind: 'physical', weight: 18, stock: 30, recycle_rp: 100, price_rp: 500, sp_reward: 0, pool_rp: true, pool_credits: true, active: true },
-    { id: 'demo-ticket', name: '金色 Season Points 券', kind: 'ticket', weight: 2, stock: 50, recycle_rp: 0, price_rp: 0, sp_reward: 500, pool_rp: true, pool_credits: true, active: true },
-    { id: 'demo-capsule', name: '驚喜球', kind: 'capsule', weight: 12, stock: 50, recycle_rp: 150, price_rp: 800, sp_reward: 0, pool_rp: true, pool_credits: true, active: true },
-    { id: 'demo-limited', name: '限定 MY AI PET 玩偶', kind: 'physical', weight: 1, stock: 5, recycle_rp: 1500, price_rp: 6000, sp_reward: 0, pool_rp: false, pool_credits: true, active: true }
+    { id: 'demo-biscuit', name: 'MY AI PET Biscuit 玩偶', kind: 'plush', weight: 8, stock: 20, recycle_rp: 250, price_rp: 1200, sp_reward: 0, pool_rp: true, pool_credits: true, active: true, image_data: '', display_style: '3d' },
+    { id: 'demo-partner', name: '合作寵物吊飾', kind: 'physical', weight: 18, stock: 30, recycle_rp: 100, price_rp: 500, sp_reward: 0, pool_rp: true, pool_credits: true, active: true, image_data: '', display_style: '3d' },
+    { id: 'demo-ticket', name: '金色 Season Points 券', kind: 'ticket', weight: 2, stock: 50, recycle_rp: 0, price_rp: 0, sp_reward: 500, pool_rp: true, pool_credits: true, active: true, image_data: '', display_style: '3d' },
+    { id: 'demo-capsule', name: '驚喜球', kind: 'capsule', weight: 12, stock: 50, recycle_rp: 150, price_rp: 800, sp_reward: 0, pool_rp: true, pool_credits: true, active: true, image_data: '', display_style: '3d' },
+    { id: 'demo-limited', name: '限定 MY AI PET 玩偶', kind: 'physical', weight: 1, stock: 5, recycle_rp: 1500, price_rp: 6000, sp_reward: 0, pool_rp: false, pool_credits: true, active: true, image_data: '', display_style: '3d' }
   ];
 
   const fresh = () => ({
@@ -122,7 +122,7 @@
         success: !!prize,
         strong: strongThisPlay || data.wallet.progress[currency] >= Number(rule.threshold),
         charged: cost,
-        prize: prize ? { id: prize.id, name: prize.name, kind: prize.kind, spReward: Number(prize.sp_reward) || Number(data.config.goldTicketSP) || 0, recycleRP: Number(prize.recycle_rp) } : null,
+        prize: prize ? { id: prize.id, name: prize.name, kind: prize.kind, spReward: Number(prize.sp_reward) || Number(data.config.goldTicketSP) || 0, recycleRP: Number(prize.recycle_rp), image_data: prize.image_data || '', display_style: prize.display_style || '3d' } : null,
         state: snapshot()
       });
     }
@@ -176,7 +176,10 @@
       }
       if (body.action === 'prize') {
         const p = body.prize || {}, existing = data.prizes.find(x => x.id === p.id);
-        const item = { id: p.id || id(), name: p.name, kind: p.kind, stock: Number(p.stock), weight: Number(p.weight), recycle_rp: Number(p.recycleRP), price_rp: Number(p.priceRP), sp_reward: Number(p.spReward), pool_rp: !!p.poolRP, pool_credits: !!p.poolCredits, active: !!p.active };
+        const imageData = String(p.imageData || ''), displayStyle = p.displayStyle || '3d';
+        if (imageData.length > 720000 || (imageData && !/^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/]+=*$/.test(imageData))) return error('獎品圖片格式無效或圖片太大。');
+        if (!['2d','3d'].includes(displayStyle)) return error('獎品呈現方式無效。');
+        const item = { id: p.id || id(), name: p.name, kind: p.kind, stock: Number(p.stock), weight: Number(p.weight), recycle_rp: Number(p.recycleRP), price_rp: Number(p.priceRP), sp_reward: Number(p.spReward), pool_rp: !!p.poolRP, pool_credits: !!p.poolCredits, active: !!p.active, image_data: imageData, display_style: displayStyle };
         if (!item.name || !Number.isSafeInteger(item.stock) || item.stock < 0) return error('請輸入有效獎品名稱與庫存。');
         if (existing) Object.assign(existing, item); else data.prizes.unshift(item);
         persist(); return result({ ok: true, id: item.id });

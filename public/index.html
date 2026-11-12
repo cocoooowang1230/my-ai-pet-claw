@@ -79,9 +79,9 @@ dialog{background:#241b29;color:#fbf3e8;border-color:#967b91}dialog::backdrop{ba
 <script type="importmap">{"imports":{"three":"./vendor/three/three.module.js","three/addons/":"./vendor/three/addons/"}}</script><script src="./demo-api.js"></script><script>
 const $=s=>document.querySelector(s);
 const fresh=()=>({credits:0,rp:0,plays:0,roundSpend:0,progress:{RP:0,Credits:0},points:0,awards:[],pending:null});
-let state=fresh(), mode='plush', activeCurrency='RP', busy=false, anim=null, last=performance.now(), soundOn=false, currentUser=null, remoteReady=false, backendMessage='正在連接遊戲服務…', gameConfig={currency:{RP:{cost:300,threshold:3000,weakChance:.1,strongChance:1},Credits:{cost:10,threshold:150,weakChance:.1,strongChance:1}}}, shopItems=[];
+let state=fresh(), mode='plush', activeCurrency='RP', busy=false, anim=null, last=performance.now(), soundOn=false, currentUser=null, remoteReady=false, backendMessage='正在連接遊戲服務…', gameConfig={currency:{RP:{cost:300,threshold:3000,weakChance:.1,strongChance:1},Credits:{cost:10,threshold:150,weakChance:.1,strongChance:1}}}, shopItems=[], prizeRevision=0, catalogStamp='', pendingPileRefresh=false;
 async function api(path,options={}){const r=await fetch('/api/'+path,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(options.headers||{})},...options});let data={};try{data=await r.json();}catch{}if(!r.ok)throw new Error(data.error||'服務暫時無法使用。');return data;}
-function applySnapshot(s){currentUser=s.user||null;remoteReady=true;gameConfig=s.config||gameConfig;shopItems=s.prizes||[];state=fresh();state.plays=s.plays||0;state.credits=s.wallet?.credits||0;state.rp=s.wallet?.rp||0;state.points=s.wallet?.sp||0;state.progress=s.wallet?.progress||{RP:0,Credits:0};state.roundSpend=state.progress[activeCurrency]||0;state.awards=(s.inventory||[]).map(i=>({id:i.id,type:['plush','physical'].includes(i.kind)?'plush':i.kind==='ticket'?'gold':'digital',kind:i.kind,name:i.name,claimed:i.status!=='stored',status:i.status,recycleRP:i.recycleRP}));backendMessage=currentUser?`已登入 ${currentUser.email}`:'請登入或建立帳戶後開始遊玩。';update();}
+function applySnapshot(s){currentUser=s.user||null;remoteReady=true;gameConfig=s.config||gameConfig;const nextPrizes=s.prizes||[],nextStamp=nextPrizes.map(p=>[p.id,p.stock,p.active,p.image_data,p.display_style,p.kind].join(':')).join('|');if(nextStamp!==catalogStamp){catalogStamp=nextStamp;shopItems=nextPrizes;prizeRevision++;if(busy)pendingPileRefresh=true;else toys=makePile();}state=fresh();state.plays=s.plays||0;state.credits=s.wallet?.credits||0;state.rp=s.wallet?.rp||0;state.points=s.wallet?.sp||0;state.progress=s.wallet?.progress||{RP:0,Credits:0};state.roundSpend=state.progress[activeCurrency]||0;state.awards=(s.inventory||[]).map(i=>({id:i.id,type:['plush','physical'].includes(i.kind)?'plush':i.kind==='ticket'?'gold':'digital',kind:i.kind,name:i.name,claimed:i.status!=='stored',status:i.status,recycleRP:i.recycleRP}));backendMessage=currentUser?`已登入 ${currentUser.email}`:'請登入或建立帳戶後開始遊玩。';update();}
 async function refreshState(){try{applySnapshot(await api('state'));}catch(e){remoteReady=false;backendMessage=e.message;update();}}
 function save(){update();}
 function update(){
@@ -139,7 +139,7 @@ $('#sound').onclick=()=>{soundOn=!soundOn;$('#sound').textContent=soundOn?'音�
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(busy)return;mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});$('#modeLabel').textContent=mode==='plush'?'PET COLLECTION':'MYSTERY CAPSULES';toys=makePile();});
 const canvas=$('#scene'),ctx=canvas.getContext('2d');
 let W=1,H=1,DPR=1,angle=0,elevation=.12,distance=7.8,pos={x:0,z:0},move={x:0,z:0},keys=new Set(),orbit=null;
-const colors=['#dfb079','#efe0c5','#afbda0','#c8b5d4','#d49b7c'];
+const colors=['#d88a36','#f0dfb9','#6e9f73','#9270bd','#ce6e56','#4f91ad'];
 function pilePosition(others){
  let best=null,bestClearance=-1;
  for(let attempt=0;attempt<64;attempt++){
@@ -153,10 +153,13 @@ function pilePosition(others){
 }
 function makePile(){
  const pile=[];
+ const activePool=shopItems.filter(p=>p.active!==false&&Number(p.stock)>0&&p[activeCurrency==='RP'?'pool_rp':'pool_credits']);
+ function choosePrize(){if(!activePool.length)return null;const total=activePool.reduce((sum,p)=>sum+Math.max(1,Number(p.weight)||1),0);let pick=Math.random()*total;return activePool.find(p=>(pick-=Math.max(1,Number(p.weight)||1))<0)||activePool[activePool.length-1];}
  for(let i=0;i<20;i++){
-  const p=pilePosition(pile),gold=i===3||i===11||i===18;
-  pile.push({...p,y:(mode==='balls'?.57:.59)+Math.random()*.13+(i%6===0?.14:0),rotation:(Math.random()-.5)*(gold?2.3:1.35),size:1.08+Math.random()*.2,color:colors[Math.floor(Math.random()*colors.length)],gold,cat:i%4===2});
+  const p=pilePosition(pile),prize=choosePrize(),gold=prize?prize.kind==='ticket'||Number(prize.sp_reward)>0:i===3||i===11||i===18;
+  pile.push({...p,y:(mode==='balls'?.57:.59)+Math.random()*.13+(i%6===0?.14:0),rotation:(Math.random()-.5)*(gold?2.3:1.35),size:1.08+Math.random()*.2,color:colors[Math.floor(Math.random()*colors.length)],gold,cat:i%4===2,prizeId:prize?.id,kind:prize?.kind|| (gold?'ticket':'plush'),name:prize?.name||'',imageData:prize?.image_data||'',displayStyle:prize?.display_style||'3d'});
  }
+ prizeRevision++;
  return pile;
 }
 let toys=makePile();
@@ -210,16 +213,19 @@ function render(now){
 
 
 
- let selected=nearest(),cx=pos.x,cz=pos.z,cy=2.9,grip=1,t=anim?(now-anim.started)/1000:0;
- if(anim){const target=toys[anim.index];cx=anim.from.x;cz=anim.from.z;
+ let selected=nearest(),cx=pos.x,cz=pos.z,cy=2.9,grip=0,t=anim?(now-anim.started)/1000:0;
+ if(anim){const target=toys[anim.index]||toys[selected];cx=anim.from.x;cz=anim.from.z;
  const reach=target.y+.51;
- if(t<1.25)cy=mix(2.9,reach,ease(t/1.25));
- else if(t<1.8){cy=reach;grip=1-ease((t-1.25)/.55);}
- else if(t<3){cy=mix(reach,2.9,ease((t-1.8)/1.2));grip=0;}
- else{cy=2.9;grip=t>4.3?ease((t-4.3)/.35):0;if(anim.award){cx=mix(anim.from.x,-1.22,ease((t-3)/1.2));cz=mix(anim.from.z,1.07,ease((t-3)/1.2));}}
+ if(t<.32){cy=2.9;grip=0;}
+ else if(t<1.2){cy=mix(2.9,reach,ease((t-.32)/.88));grip=0;}
+ else if(t<1.48){cy=reach;grip=ease((t-1.2)/.28);}
+ else if(t<1.76){cy=reach;grip=1;}
+ else if(t<2.28){cy=mix(reach,2.9,ease((t-1.76)/.52));grip=.88;}
+ else if(t<2.92){const progress=ease((t-2.28)/.64);cx=mix(anim.from.x,-1.22,progress);cz=mix(anim.from.z,1.07,progress);cy=2.9;grip=.88;}
+ else{cx=-1.22;cz=1.07;cy=2.9;grip=t<3.24?1-ease((t-2.92)/.32):0;}
  selected=anim.index;}
  const target=toys[selected];const aligned=Math.hypot(target.x-pos.x,target.z-pos.z)<=.30;let ring=[];for(let i=0;i<=40;i++){let q=i/40*Math.PI*2;ring.push([pos.x+.30*Math.cos(q),.27,pos.z+.30*Math.sin(q)]);}if(!photoReady)line([[pos.x,3.07,pos.z],[pos.x,.28,pos.z]],'#8c6b393d',.75);
- if(!photoReady){toys.forEach((toy,i)=>{let x=toy.x,y=toy.y,z=toy.z,r=toy.rotation;if(anim&&anim.aligned&&i===anim.index&&t>1.65){if(anim.award){if(t<4.4){x=cx;y=cy-.43;z=cz;}else{x=-1.22;z=1.07;y=mix(3.2,-.5,ease((t-4.4)/.55));if(y<.2)return;}}else if(t<2.55){y=cy-.43;r=toy.rotation+Math.sin(t*13)*.15;}else if(t<3.1){y=mix(2.4,toy.y,ease((t-2.55)/.5));r=toy.rotation+Math.sin(t*12)*.2;}}drawToy(toy,x,y,z,r);});
+ if(!photoReady){toys.forEach((toy,i)=>{let x=toy.x,y=toy.y,z=toy.z,r=toy.rotation;if(anim&&anim.aligned&&i===anim.index&&t>1.44){if(anim.award){if(t<2.9){x=cx;y=cy-.43;z=cz;}else if(t<3.25){x=-1.22;z=1.07;y=mix(2.45,-.12,ease((t-2.9)/.35));r=toy.rotation+(t-2.9)*2;if(y<.25)return;}else return;}else if(t<2.75){y=cy-.43;r=toy.rotation+Math.sin(t*19)*.18;}else if(t<3.2){y=mix(2.1,toy.y,ease((t-2.75)/.45));r=toy.rotation+Math.sin(t*16)*.22;}}drawToy(toy,x,y,z,r);});
  line([[-1.55,4.12,cz],[1.55,4.12,cz]],'#8c7654',5);box(cx,4.04,cz,.38,.18,.35,'#5c482f');line([[cx,4.03,cz],[cx,cy+.18,cz]],'#9b8664',3);
  for(let i=0;i<3;i++){let q=i*Math.PI*2/3,spread=.18+grip*.22;line([[cx,cy,cz],[cx+Math.cos(q)*.34,cy-.22,cz+Math.sin(q)*.34],[cx+Math.cos(q)*spread,cy-.51,cz+Math.sin(q)*spread]],'#8d7854',5);}
  box(cx,cy+.03,cz,.3,.2,.3,'#c8b184');}
@@ -228,8 +234,8 @@ function render(now){
  if(!photoReady){const label=project(0,4.3,0);ctx.fillStyle='#564024';ctx.textAlign='center';ctx.font='800 '+Math.max(10,label.s*.13)+'px system-ui';ctx.fillText('PET',label.x,label.y+4);}
 
  if(!busy){$('#target').textContent=!aligned?'移動光圈，對準獎品':mode==='balls'?'已瞄準：驚喜球':target.gold?'已瞄準：金色積分券':'已瞄準：My AI Pet 玩偶';$('#target').classList.toggle('locked',aligned);}
- window.clawMachine3D?.update({position:pos,toys,mode,anim,now,cx,cz,cy,grip});
- if(anim&&t>5.1){const result=anim;if(result.aligned)settlePrize(result.index,!!result.award);anim=null;busy=false;pos={x:0,z:0};$('#status').textContent='準備好，遇見你的 AI 夥伴';update();if(result.award){beep(true);awardScreen(result.award,mode==='balls');}else{beep();toast(!result.aligned?(result.strong?'抓空了！強爪持續中，對準獎品再試。':'抓空了，移動光圈對準獎品中心。'):'爪子鬆開了… 保夾消費已累積。');}}
+ window.clawMachine3D?.update({position:pos,toys,mode,anim,now,cx,cz,cy,grip,prizeRevision});
+ if(anim&&anim.resolved&&t>3.35){const result=anim;if(result.aligned)settlePrize(result.index,!!result.award);anim=null;busy=false;pos={x:0,z:0};if(pendingPileRefresh){pendingPileRefresh=false;toys=makePile();}$('#status').textContent='準備好，遇見你的 AI 夥伴';update();if(result.award){beep(true);awardScreen(result.award,mode==='balls');}else{beep();toast(!result.aligned?(result.strong?'抓空了！強爪持續中，對準獎品再試。':'抓空了，移動光圈對準獎品中心。'):'爪子鬆開了… 保夾消費已累積。');}}
  requestAnimationFrame(render);
 }
 async function drop(){
@@ -240,21 +246,24 @@ async function drop(){
  const index=nearest(),target=toys[index],kind=target.gold?'gold':'plush';
  const aligned=Math.hypot(target.x-pos.x,target.z-pos.z)<=.30;
  busy=true;update();release();keys.clear();
- try{const data=await api('play',{method:'POST',body:JSON.stringify({currency:activeCurrency,aligned})});const kind=data.prize?.kind,result=data.prize?{id:data.prize.id,type:['plush','physical'].includes(kind)?'plush':kind==='ticket'?'gold':'digital',name:data.prize.name,kind,recycleRP:data.prize.recycleRP,spReward:data.prize.spReward,claimed:false}:null;const roundSpend=data.state?.wallet?.progress?.[activeCurrency]||0;applySnapshot(data.state);anim={award:result,strong:data.strong,cost:data.charged,aligned,index,roundSpend,started:performance.now(),from:{...pos}};$('#status').textContent=data.strong?'強爪出動 · 瞄準仍然很重要':'正在下爪… 把幸運抓住。';beep();}
- catch(e){busy=false;await refreshState();toast(e.message);}
+ const ruleStrong=Number(rule.threshold)>0&&progress+cost>=Number(rule.threshold);
+ anim={award:null,strong:ruleStrong,cost,aligned,index,roundSpend:progress+cost,started:performance.now(),from:{...pos},resolved:false};
+ $('#status').textContent='爪子張開中… 正在瞄準獎品';beep();
+ try{const data=await api('play',{method:'POST',body:JSON.stringify({currency:activeCurrency,aligned})});const prize=data.prize,kind=prize?.kind,result=prize?{id:prize.id,type:['plush','physical'].includes(kind)?'plush':kind==='ticket'?'gold':'digital',name:prize.name,kind,recycleRP:prize.recycleRP,spReward:prize.spReward,claimed:false}:null;applySnapshot(data.state);if(result){const prizeIndex=toys.findIndex(toy=>toy.prizeId===prize.id);if(prizeIndex>=0)anim.index=prizeIndex;}anim.award=result;anim.strong=data.strong;anim.cost=data.charged;anim.roundSpend=data.state?.wallet?.progress?.[activeCurrency]||0;anim.resolved=true;$('#status').textContent=data.strong?'強爪出動 · 爪子正在收回':'正在收回爪子…';}
+ catch(e){busy=false;anim=null;await refreshState();toast(e.message);}
 }
 $('#drop').onclick=drop;
 document.querySelectorAll('[data-currency]').forEach(b=>b.onclick=()=>{if(busy)return;activeCurrency=b.dataset.currency;state.roundSpend=state.progress[activeCurrency]||0;update();});
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{window.clawMachine3D?.setView(b.dataset.view);document.querySelectorAll('[data-view]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});});
 document.querySelector('[data-view="front"]').classList.add('active');document.querySelector('[data-view="front"]').setAttribute('aria-pressed','true');
-const joy=$('#joystick'),knob=$('#knob');let joyActive=false;
+const joy=$('#joystick'),knob=$('#knob');let joyActive=false,controlsEngaged=false;
 function stick(e){let r=joy.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dz=e.clientY-r.top-r.height/2,limit=Math.min(32,r.width*.28),n=Math.max(1,Math.hypot(dx,dz)/limit);dx/=n;dz/=n;move={x:dx/limit,z:dz/limit};knob.style.transform='translate('+dx+'px,'+dz+'px)';}
-joy.onpointerdown=e=>{if(busy||modalOpen())return;e.preventDefault();joyActive=true;joy.setPointerCapture(e.pointerId);stick(e);};
+joy.onpointerdown=e=>{if(busy||modalOpen())return;e.preventDefault();controlsEngaged=true;joy.focus({preventScroll:true});joyActive=true;joy.setPointerCapture(e.pointerId);stick(e);};
 joy.onpointermove=e=>{if(joyActive)stick(e);};
 function release(){joyActive=false;move={x:0,z:0};knob.style.transform='';}
 joy.onpointerup=joy.onpointercancel=joy.onlostpointercapture=release;
 document.querySelectorAll('[data-dir]').forEach(b=>{b.onpointerdown=e=>{if(busy||modalOpen())return;e.preventDefault();const m={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.dir];move={x:m[0],z:m[1]};b.setPointerCapture(e.pointerId);};b.onpointerup=b.onpointercancel=b.onlostpointercapture=release;b.onclick=e=>{if(e.detail===0&&!busy&&!modalOpen()){const m={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.dir],a=window.clawMachine3D?.getAngle?.()??angle;pos.x=clamp(pos.x+.2*(m[0]*Math.cos(a)+m[1]*Math.sin(a)),-1.35,1.35);pos.z=clamp(pos.z+.2*(-m[0]*Math.sin(a)+m[1]*Math.cos(a)),-1.07,1.07);}};});
-window.addEventListener('keydown',e=>{if(modalOpen()||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;let k=e.key.length===1?e.key.toLowerCase():e.key;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(k)){e.preventDefault();keys.add(k);}if(e.code==='Space'){if(document.activeElement.tagName==='BUTTON'&&document.activeElement.id!=='drop')return;e.preventDefault();if(!e.repeat)drop();}});
+window.addEventListener('keydown',e=>{if(modalOpen()||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;let k=e.key.length===1?e.key.toLowerCase():e.key;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(k)){controlsEngaged=true;e.preventDefault();keys.add(k);}if(e.code==='Space'){if(document.activeElement.tagName==='BUTTON'&&document.activeElement.id!=='drop'&&!controlsEngaged)return;e.preventDefault();if(!e.repeat)drop();}});
 window.addEventListener('keyup',e=>keys.delete(e.key.length===1?e.key.toLowerCase():e.key));
 window.addEventListener('blur',()=>{keys.clear();release();orbit=null;});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();release();}});

@@ -23,10 +23,10 @@ try {
   controls.enableDamping = true;
   controls.dampingFactor = 0.075;
   controls.enablePan = false;
-  controls.minDistance = 6.4;
+  controls.minDistance = 5.6;
   controls.maxDistance = 13;
-  controls.minPolarAngle = 0.12;
-  controls.maxPolarAngle = Math.PI * 0.64;
+  controls.minPolarAngle = 0.035;
+  controls.maxPolarAngle = Math.PI - 0.035;
   controls.addEventListener('start', () => { cameraTween = null; });
 
   scene.add(new THREE.HemisphereLight('#fff0d8', '#604953', 3.0));
@@ -77,9 +77,15 @@ try {
   block(machine, [5.7, 0.24, 4.35], [0, -0.02, 0], darkMetal, 'cabinet base');
   block(machine, [5.35, 0.13, 4.0], [0, 0.15, 0], standard('#715866', 0.35, 0.4), 'play floor');
   block(machine, [5.7, 0.16, 4.35], [0, 4.53, 0], darkMetal, 'top crown');
-  block(machine, [5.35, 4.25, 0.12], [0, 2.27, -2.03], plum, 'back wall');
+  // Keep the rear of the prize chamber transparent so side and underside cameras
+  // can actually see the toys instead of staring at an opaque backboard.
+  const rearGlass = new THREE.Mesh(new THREE.BoxGeometry(5.28, 4.04, 0.025), glass);
+  rearGlass.position.set(0, 2.27, -2.0);
+  rearGlass.name = 'rear glass';
+  machine.add(rearGlass);
+  for (const x of [-2.64, 2.64]) block(machine, [0.1, 4.2, 0.12], [x, 2.27, -2.03], chrome, 'rear corner frame');
   for (const x of [-2.7, 2.7]) {
-    block(machine, [0.14, 4.25, 4.12], [x, 2.27, 0], chrome, 'corner upright');
+    for (const z of [-2.04, 2.04]) roundBar(machine, [x, 0.2, z], [x, 4.35, z], 0.075, chrome, 12);
     block(machine, [0.018, 3.82, 0.045], [x * 0.985, 2.3, 0], emit(x < 0 ? '#ffa54a' : '#ca71e8', 1.25), 'cabinet light');
   }
   const chamberLight = new THREE.PointLight('#ffe0b8', 78, 12, 2);
@@ -115,6 +121,7 @@ try {
   block(machine, [5.05, 0.1, 0.12], [0, 4.22, -1.83], chrome, 'gantry x rail');
   block(machine, [0.12, 0.1, 3.85], [0, 4.22, 0], chrome, 'gantry z rail');
   const trolley = new THREE.Group();
+  trolley.name = 'overhead trolley and claw';
   machine.add(trolley);
   block(trolley, [0.55, 0.2, 0.46], [0, 4.08, 0], darkMetal, 'motor trolley');
   block(trolley, [0.27, 0.13, 0.27], [0, 4.22, 0], gold, 'trolley bearing');
@@ -162,7 +169,7 @@ try {
     return group;
   }
 
-  const plushColors = ['#d5a76f', '#f1dfc1', '#a8b79d', '#bba4cd', '#c78265', '#d9c59f'];
+  const plushColors = ['#d88a36', '#f0dfb9', '#6e9f73', '#9270bd', '#ce6e56', '#4f91ad'];
   const furTexture = (() => {
     const c = document.createElement('canvas');
     c.width = c.height = 96;
@@ -229,7 +236,7 @@ try {
   }
   function makeCapsule(toy, index) {
     const group = new THREE.Group();
-    const colors = ['#8b63ad', '#eca451', '#a9b98e', '#d98f86', '#87a9c1'];
+    const colors = ['#8656b5', '#f39b32', '#70a66d', '#df657d', '#428db8'];
     const shell = new THREE.MeshPhysicalMaterial({ color: colors[index % colors.length], metalness: 0.1, roughness: 0.2, transparent: true, opacity: 0.78, transmission: 0.12, clearcoat: 0.85 });
     sphere(group, [0, 0.36, 0], [0.34, 0.35, 0.34], shell, 'capsule shell');
     const seam = new THREE.Mesh(new THREE.TorusGeometry(0.329, 0.018, 7, 32), chrome);
@@ -239,22 +246,78 @@ try {
     sphere(group, [0, 0.34, 0.025], [0.12, 0.12, 0.12], standard(index % 2 ? '#f5cf7b' : '#eee3d0', 0.18, 0.35), 'capsule prize');
     return group;
   }
+  function makeImagePrize(toy, index, isThreeDimensional) {
+    const group = new THREE.Group();
+    const fur = standard(toy.color || plushColors[index % plushColors.length], 0, 0.88);
+    const cream = standard('#f4e5d2', 0, 0.88);
+    if (isThreeDimensional) {
+      // A lightweight plush silhouette gives the uploaded product image real depth
+      // and lighting in the machine. The source picture remains a clear front decal.
+      sphere(group, [0, 0.36, 0], [0.35, 0.39, 0.27], fur, 'custom plush body');
+      sphere(group, [0, 0.87, 0], [0.35, 0.34, 0.29], fur, 'custom plush head');
+      for (const side of [-1, 1]) {
+        sphere(group, [side * 0.25, 1.12, 0], [0.14, 0.17, 0.13], fur, 'custom plush ear');
+        sphere(group, [side * 0.15, 0.38, 0.23], [0.16, 0.13, 0.08], cream, 'custom plush paw');
+      }
+    } else {
+      // 2D setting: a thin, beveled prize card, still positioned and rotated in 3D.
+      const shape = new THREE.Shape();
+      const w = 0.39, h = 0.57, r = 0.09;
+      shape.moveTo(-w + r, -h); shape.lineTo(w - r, -h); shape.quadraticCurveTo(w, -h, w, -h + r);
+      shape.lineTo(w, h - r); shape.quadraticCurveTo(w, h, w - r, h); shape.lineTo(-w + r, h);
+      shape.quadraticCurveTo(-w, h, -w, h - r); shape.lineTo(-w, -h + r); shape.quadraticCurveTo(-w, -h, -w + r, -h);
+      const backing = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.035, bevelThickness: 0.035 }), gold);
+      backing.position.y = 0.76; backing.castShadow = true; group.add(backing);
+    }
+    const imagePlane = new THREE.Mesh(new THREE.PlaneGeometry(isThreeDimensional ? 0.53 : 0.68, isThreeDimensional ? 0.58 : 0.94), new THREE.MeshBasicMaterial({ color: '#fffaf0', side: THREE.DoubleSide }));
+    imagePlane.position.set(0, isThreeDimensional ? 0.78 : 0.76, isThreeDimensional ? 0.31 : 0.17);
+    imagePlane.name = 'uploaded prize image';
+    imagePlane.userData.hasUploadedImage = true;
+    group.add(imagePlane);
+    group.userData.hasUploadedImage = true;
+    group.userData.imagePlane = imagePlane;
+    group.userData.isThreeDimensional = isThreeDimensional;
+    return group;
+  }
   const prizeRoot = new THREE.Group();
   machine.add(prizeRoot);
   let prizeMeshes = [];
   let prizeMode = '';
-  function syncPrizes(toys, mode) {
-    if (prizeMode === mode && prizeMeshes.length === toys.length) return;
-    for (const object of prizeMeshes) prizeRoot.remove(object);
+  let prizeRevision = -1;
+  const prizeTextures = new THREE.TextureLoader();
+  function syncPrizes(toys, mode, revision) {
+    if (prizeMode === mode && prizeRevision === revision && prizeMeshes.length === toys.length) return;
+    for (const object of prizeMeshes) {
+      const imagePlane = object.userData.imagePlane;
+      if (imagePlane?.material?.map) imagePlane.material.map.dispose();
+      prizeRoot.remove(object);
+    }
     prizeMeshes = toys.map((toy, i) => {
-      const object = mode === 'balls' ? makeCapsule(toy, i) : (toy.gold ? makeTicket() : makePlush(toy, i));
+      const showImage = mode !== 'balls' && !!toy.imageData && ['plush', 'physical'].includes(toy.kind);
+      const object = mode === 'balls' ? makeCapsule(toy, i) : toy.gold ? makeTicket() : showImage ? makeImagePrize(toy, i, toy.displayStyle !== '2d') : makePlush(toy, i);
       object.userData.index = i;
+      object.userData.prizeId = toy.prizeId;
+      if (showImage) {
+        const plane = object.userData.imagePlane;
+        prizeTextures.load(toy.imageData, texture => {
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          const imageAspect = texture.image.width / texture.image.height;
+          const boxAspect = plane.geometry.parameters.width / plane.geometry.parameters.height;
+          if (imageAspect > boxAspect) plane.scale.y = boxAspect / imageAspect;
+          else plane.scale.x = imageAspect / boxAspect;
+          plane.material.map = texture;
+          plane.material.color.set('#ffffff');
+          plane.material.needsUpdate = true;
+        }, undefined, error => console.warn('獎品圖片無法載入', toy.name, error));
+      }
       object.scale.setScalar(mode === 'balls' ? 0.82 + toy.size * 0.12 : 0.72 + toy.size * 0.12);
       object.rotation.y = toy.rotation || (i * 1.7);
       prizeRoot.add(object);
       return object;
     });
     prizeMode = mode;
+    prizeRevision = revision;
   }
 
   const targetRing = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.018, 8, 56), emit('#ffd475', 1.8));
@@ -274,15 +337,17 @@ try {
   chuteLight.position.set(-2.03, 0.62, 1.62);
   machine.add(chuteLight);
 
+  const targetCenter = new THREE.Vector3(0, 2.05, 0);
   const initialDistance = wrap.clientWidth / Math.max(1, wrap.clientHeight) < 1.15 ? 10.7 : 8.7;
-  camera.position.set(0.25, 3.65, initialDistance);
+  camera.position.copy(targetCenter).add(new THREE.Vector3(0.25, 1.6, initialDistance));
   controls.update();
 
   function resize() {
     const width = Math.max(1, wrap.clientWidth), height = Math.max(1, wrap.clientHeight);
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    camera.position.setLength(width / height < 1.15 ? 10.7 : 8.7);
+    const direction = camera.position.clone().sub(controls.target).normalize();
+    camera.position.copy(controls.target).addScaledVector(direction, width / height < 1.15 ? 10.7 : 8.7);
     camera.updateProjectionMatrix();
   }
   new ResizeObserver(resize).observe(wrap);
@@ -290,20 +355,37 @@ try {
 
   function smooth(t) { return t * t * (3 - 2 * t); }
   const preset = {
-    front: [0, 3.65, 8.7], left: [-8.7, 3.4, 0.2], right: [8.7, 3.4, 0.2],
-    top: [0, 10.2, 0.08], bottom: [0, 0.55, 8.7]
+    front: [0, 3.65, 8.7], left: [-8.5, 2.25, 0], right: [8.5, 2.25, 0],
+    top: [0, 10.8, 0.05], bottom: [0, -6.1, 0.1]
   };
   let cameraTween = null;
+  const chamberBase = machine.children.find(child => child.name === 'cabinet base');
+  const chamberFloor = machine.children.find(child => child.name === 'play floor');
+  const crown = machine.children.find(child => child.name === 'top crown');
+  const gantryX = machine.children.find(child => child.name === 'gantry x rail');
+  const gantryZ = machine.children.find(child => child.name === 'gantry z rail');
+  const overheadTrolley = machine.children.find(child => child.name === 'overhead trolley and claw');
+  function setGhostView(name) {
+    chamberBase.visible = chamberFloor.visible = name !== 'bottom';
+    crown.visible = name !== 'top';
+    gantryX.visible = gantryZ.visible = name !== 'top';
+    overheadTrolley.visible = name !== 'top';
+  }
   function setView(name) {
     const p = preset[name];
     if (!p) return;
-    const desired = new THREE.Vector3(...p);
-    if (wrap.clientWidth / Math.max(1, wrap.clientHeight) < 1.15 && name !== 'top' && name !== 'bottom') desired.setLength(10.7);
+    setGhostView(name);
+    controls.enableDamping = false;
+    controls.update();
+    controls.enableDamping = true;
+    const offset = new THREE.Vector3(...p).sub(targetCenter);
+    if (wrap.clientWidth / Math.max(1, wrap.clientHeight) < 1.15 && name !== 'top' && name !== 'bottom') offset.setLength(10.7);
+    const desired = targetCenter.clone().add(offset);
     cameraTween = { from: camera.position.clone(), to: desired, start: performance.now(), duration: 700 };
     controls.target.set(0, 2.05, 0);
   }
   function update(state) {
-    syncPrizes(state.toys, state.mode);
+    syncPrizes(state.toys, state.mode, state.prizeRevision);
     const targetX = state.position.x * 1.65;
     const targetZ = state.position.z * 1.5;
     targetRing.position.x = targetX;
@@ -320,31 +402,41 @@ try {
       object.visible = true;
       if (state.anim && state.anim.aligned && state.anim.index === i && state.anim.award) {
         const elapsed = (state.now - state.anim.started) / 1000;
-        if (elapsed > 1.8 && elapsed < 4.92) {
+        if (elapsed > 1.44 && elapsed < 3.25) {
           const grabX = state.cx * 1.65, grabZ = state.cz * 1.5;
-          if (elapsed < 4.4) object.position.set(grabX, Math.max(0.6, state.cy * 0.95 + 0.55), grabZ);
+          if (elapsed < 2.92) object.position.set(grabX, Math.max(0.6, state.cy * 0.95 + 0.55), grabZ);
           else {
-            const t = smooth(Math.min(1, (elapsed - 4.4) / 0.52));
+            const t = smooth(Math.min(1, (elapsed - 2.92) / 0.33));
             object.position.set(THREE.MathUtils.lerp(grabX, -2.03, t), THREE.MathUtils.lerp(state.cy * 0.95 + 0.55, 0.48, t), THREE.MathUtils.lerp(grabZ, 1.62, t));
           }
-        } else if (elapsed >= 4.92) object.visible = false;
+        } else if (elapsed >= 3.25) object.visible = false;
       }
     });
     trolley.position.x = targetX;
   trolley.position.z = targetZ;
     const clawY = Math.max(1.18, state.cy * 0.96 + 0.68);
-    clawHead.position.set(0, clawY, 0);
+    const elapsed = state.anim ? (state.now - state.anim.started) / 1000 : -1;
+    const shaking = elapsed > 0.6 && elapsed < 1.75;
+    const sway = shaking ? Math.sin(elapsed * 24) * 0.055 : 0;
+    clawHead.position.set(sway, clawY, shaking ? Math.cos(elapsed * 20) * 0.045 : 0);
+    clawHead.rotation.z = shaking ? Math.sin(elapsed * 17) * 0.055 : 0;
     const cableLength = Math.max(0.08, 4.0 - clawY);
     cable.scale.y = cableLength;
     cable.position.set(0, (4.0 + clawY) / 2, 0);
     const spread = 1 - Math.max(0, Math.min(1, state.grip)) * 0.42;
     armRoot.scale.set(spread, 1, spread);
     if (cameraTween) {
-      const t = Math.min(1, (performance.now() - cameraTween.start) / cameraTween.duration);
-      camera.position.lerpVectors(cameraTween.from, cameraTween.to, smooth(t));
-      if (t >= 1) cameraTween = null;
-    }
-    controls.update();
+      controls.enabled = false;
+      camera.position.lerpVectors(cameraTween.from, cameraTween.to, smooth(Math.min(1, (performance.now() - cameraTween.start) / cameraTween.duration)));
+      camera.lookAt(controls.target);
+      if (performance.now() - cameraTween.start >= cameraTween.duration) {
+        cameraTween = null;
+        controls.enabled = true;
+        controls.enableDamping = false;
+        controls.update();
+        controls.enableDamping = true;
+      }
+    } else controls.update();
     renderer.render(scene, camera);
   }
 
@@ -357,6 +449,8 @@ try {
   window.clawMachine3D = {
     ready: true,
     setView,
+    getViewSnapshot() { return { camera: camera.position.toArray(), target: controls.target.toArray(), transitioning: !!cameraTween, visiblePrizes: prizeMeshes.filter(mesh => mesh.visible).length, imagePrizes: prizeMeshes.filter(mesh => mesh.userData.hasUploadedImage).length, loadedImages: prizeMeshes.filter(mesh => mesh.userData.imagePlane?.material?.map).length, threeDimensionalImagePrizes: prizeMeshes.filter(mesh => mesh.userData.isThreeDimensional).length }; },
+    getClawSnapshot() { return { y: clawHead.position.y, x: clawHead.position.x, open: armRoot.scale.x }; },
     getCameraPosition() { return camera.position.toArray(); },
     getAngle() { return Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z); },
     update(state) { lastState = state; }
