@@ -53,10 +53,10 @@
       wallet: structuredClone(data.wallet),
       plays: data.plays,
       config: structuredClone(data.config),
-      prizes: data.prizes.filter(p => p.active).map(p => ({
+      prizes: data.prizes.filter(p => p.active && p.kind !== 'capsule').map(p => ({
         ...p, recycleRP: p.recycle_rp, priceRP: p.price_rp, spReward: p.sp_reward
       })),
-      inventory: data.inventory.filter(i => ['stored', 'shipping_requested'].includes(i.status)).map(i => ({
+        inventory: data.inventory.filter(i => ['stored', 'shipping_requested', 'delivered'].includes(i.status)).map(i => ({
         ...i, recycleRP: i.recycle_rp
       }))
     };
@@ -95,14 +95,14 @@
       const strong = Number(rule.threshold) > 0 && progress >= Number(rule.threshold);
       const cost = strong ? 0 : Number(rule.cost);
       if (data.wallet[balanceKey] < cost) return error(`${currency} 餘額不足。`, 402);
-      const pool = data.prizes.filter(p => p.active && p.stock > 0 && p[currency === 'RP' ? 'pool_rp' : 'pool_credits']);
+      const pool = data.prizes.filter(p => p.active && p.kind !== 'capsule' && p.stock > 0 && p[currency === 'RP' ? 'pool_rp' : 'pool_credits']);
       if (!pool.length) return error('目前此獎池沒有庫存，請稍後再試。', 409);
       const nextProgress = progress + cost;
       const strongThisPlay = strong || (Number(rule.threshold) > 0 && nextProgress >= Number(rule.threshold));
       const aligned = body.aligned === true;
       const won = aligned && Math.random() < Number(strongThisPlay ? rule.strongChance : rule.weakChance);
       let prize = null;
-      let wonInventoryId = null;
+      let wonInventoryId = null, digitalAward = null;
       if (won) {
         const total = pool.reduce((sum, item) => sum + Math.max(1, Number(item.weight)), 0);
         let pick = Math.random() * total;
@@ -114,9 +114,12 @@
       if (prize) {
         prize.stock--;
         const spReward = Number(prize.sp_reward) > 0 ? Number(prize.sp_reward) : Number(data.config.goldTicketSP) || 0;
-        if (prize.kind === 'ticket' || Number(prize.sp_reward) > 0) data.wallet.sp += spReward;
-        wonInventoryId = id();
-        data.inventory.unshift({ id: wonInventoryId, name: prize.name, kind: prize.kind, prize_id: prize.id, status: 'stored', created_at: now(), recycle_rp: prize.recycle_rp, recycleRP: prize.recycle_rp });
+        if (prize.kind === 'ticket') { data.wallet.sp += spReward; digitalAward={currency:'SP',amount:spReward}; }
+        else if(prize.kind==='digital'){
+          const currency=prize.digital_currency||'SP',amount=Number(prize.digital_amount)||0;
+          if(['SP','RP','Credits'].includes(currency)&&amount>0){const key={SP:'sp',RP:'rp',Credits:'credits'}[currency];data.wallet[key]+=amount;digitalAward={currency,amount};}
+          else if(currency==='Coupon'){wonInventoryId=id();digitalAward={currency,amount:0,code:prize.digital_code||''};data.inventory.unshift({id:wonInventoryId,name:prize.name,kind:prize.kind,prize_id:prize.id,status:'delivered',created_at:now(),recycle_rp:prize.recycle_rp,digital_currency:currency,digital_amount:0,digital_code:prize.digital_code||'',image_data:prize.image_data||''});}
+        }else{wonInventoryId=id();data.inventory.unshift({id:wonInventoryId,name:prize.name,kind:prize.kind,prize_id:prize.id,status:'stored',created_at:now(),recycle_rp:prize.recycle_rp,recycleRP:prize.recycle_rp});}
       }
       data.playLog.unshift({ id: id(), created_at: now(), email: data.user.email, currency, cost, strong: strongThisPlay, success: !!prize, prize_name: prize?.name || null });
       persist();
@@ -124,19 +127,19 @@
         success: !!prize,
         strong: strongThisPlay || data.wallet.progress[currency] >= Number(rule.threshold),
         charged: cost,
-        prize: prize ? { id: prize.id, inventoryId: wonInventoryId, name: prize.name, kind: prize.kind, spReward: Number(prize.sp_reward) || Number(data.config.goldTicketSP) || 0, recycleRP: Number(prize.recycle_rp), image_data: prize.image_data || '', display_style: prize.display_style || '3d' } : null,
+        prize: prize ? { id: prize.id, inventoryId: wonInventoryId, name: prize.name, kind: prize.kind, spReward: Number(prize.sp_reward) || Number(data.config.goldTicketSP) || 0, digitalCurrency:prize.digital_currency||'SP',digitalAmount:Number(prize.digital_amount)||0,digitalCode:prize.digital_code||'',digitalAward,recycleRP: Number(prize.recycle_rp), image_data: prize.image_data || '', display_style: prize.display_style || '2d' } : null,
         state: snapshot()
       });
     }
     if (path === '/api/rewards') {
       const denied = needUser(); if (denied) return denied;
       if (method === 'GET') return result({
-        shop: data.prizes.filter(p => p.active).map(p => ({ id: p.id, name: p.name, kind: p.kind, stock: p.stock, recycle_rp: p.recycle_rp, price_rp: p.price_rp, pool_rp: p.pool_rp, pool_credits: p.pool_credits })),
+        shop: data.prizes.filter(p => p.active && ['physical','plush'].includes(p.kind)).map(p => ({ id: p.id, name: p.name, kind: p.kind, stock: p.stock, recycle_rp: p.recycle_rp, price_rp: p.price_rp, pool_rp: p.pool_rp, pool_credits: p.pool_credits })),
         warehouse: structuredClone(data.inventory),
         orders: structuredClone(data.orders).map(o => ({ id: o.id, status: o.status, created_at: o.created_at, recipient:o.recipient, phone:o.phone, address:o.address, email:o.email, inventory_ids:o.inventory_ids }))
       });
       if (body.action === 'redeem') {
-        const prize = data.prizes.find(p => p.id === body.prizeId && p.active && p.stock > 0);
+        const prize = data.prizes.find(p => p.id === body.prizeId && p.active && p.stock > 0 && ['physical','plush'].includes(p.kind));
         if (!prize) return error('商品目前無庫存。', 409);
         const cost = Number(prize.price_rp);
         if (!cost || data.wallet.rp < cost) return error('RP 餘額不足或商品價格尚未設定。', 402);
@@ -153,10 +156,10 @@
       if (body.action === 'ship') {
         if (data.config.shippingEnabled === false) return error('配送功能暫時關閉。', 403);
         const ids = [...new Set(Array.isArray(body.inventoryIds) ? body.inventoryIds : [])];
-        const items = data.inventory.filter(i => ids.includes(i.id) && i.status === 'stored');
+        const items = data.inventory.filter(i => ids.includes(i.id) && i.status === 'stored' && ['physical','plush'].includes(i.kind));
         if (!ids.length || items.length !== ids.length) return error('請選擇可寄送的獎品。', 409);
-        const order = { id: id(), user_id: data.user.id, email: data.user.email, inventory_ids: ids, recipient: String(body.recipient || ''), phone: String(body.phone || ''), address: String(body.address || ''), status: 'requested', created_at: now() };
-        if (!order.recipient || !order.phone || !order.address) return error('請完整填寫收件資料。');
+        const order = { id: id(), user_id: data.user.id, email: data.user.email, inventory_ids: ids, recipient: String(body.recipient || ''), phone: String(body.phone || ''), address: String(body.address || ''), contact_email:String(body.email||''), status: 'requested', created_at: now() };
+        if (!order.recipient || !order.phone || !order.address || !/^\S+@\S+\.\S+$/.test(order.contact_email)) return error('請填寫有效的收件人、電話、Email 與地址。');
         items.forEach(i => { i.status = 'shipping_requested'; }); data.orders.unshift(order); persist();
         return result({ ok: true, orderId: order.id });
       }
@@ -180,8 +183,11 @@
         const p = body.prize || {}, existing = data.prizes.find(x => x.id === p.id);
         const imageData = String(p.imageData || ''), displayStyle = p.displayStyle || '3d';
         if (imageData.length > 720000 || (imageData && !/^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/]+=*$/.test(imageData))) return error('獎品圖片格式無效或圖片太大。');
+        if (!['plush','physical','ticket','digital'].includes(p.kind)) return error('請選擇實體或數位獎品類型。');
+        if (p.kind==='digital'&&p.digitalCurrency==='Coupon'&&!String(p.digitalCode||'').trim()) return error('數位折價券請填寫折價碼或兌換代碼。');
+        if (p.kind==='digital'&&p.digitalCurrency!=='Coupon'&&Number(p.digitalAmount)<1) return error('數位點數獎品數量至少為 1。');
         if (!['2d','3d'].includes(displayStyle)) return error('獎品呈現方式無效。');
-        const item = { id: p.id || id(), name: p.name, kind: p.kind, stock: Number(p.stock), weight: Number(p.weight), recycle_rp: Number(p.recycleRP), price_rp: Number(p.priceRP), sp_reward: Number(p.spReward), pool_rp: !!p.poolRP, pool_credits: !!p.poolCredits, active: !!p.active, image_data: imageData, display_style: displayStyle };
+        const item = { id: p.id || id(), name: p.name, kind: p.kind, stock: Number(p.stock), weight: Number(p.weight), recycle_rp: Number(p.recycleRP), price_rp: Number(p.priceRP), sp_reward: Number(p.spReward), pool_rp: !!p.poolRP, pool_credits: !!p.poolCredits, active: !!p.active, image_data: imageData, display_style: displayStyle,digital_currency:p.digitalCurrency||'SP',digital_amount:Number(p.digitalAmount)||0,digital_code:String(p.digitalCode||'') };
         if (!item.name || !Number.isSafeInteger(item.stock) || item.stock < 0) return error('請輸入有效獎品名稱與庫存。');
         if (existing) Object.assign(existing, item); else data.prizes.unshift(item);
         persist(); return result({ ok: true, id: item.id });

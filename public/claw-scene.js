@@ -293,24 +293,11 @@ try {
       prizeRoot.remove(object);
     }
     prizeMeshes = toys.map((toy, i) => {
-      const showImage = !!toy.imageData && ['plush', 'physical'].includes(toy.kind);
-      const object = mode === 'balls' && !showImage ? makeCapsule(toy, i) : toy.gold ? makeTicket() : showImage ? makeImagePrize(toy, i, toy.displayStyle !== '2d') : makePlush(toy, i);
+      // Every physical prize remains sealed inside the same capsule; uploaded
+      // product photos appear only after the player opens the won capsule.
+      const object = makeCapsule(toy, i);
       object.userData.index = i;
       object.userData.prizeId = toy.prizeId;
-      if (showImage) {
-        const plane = object.userData.imagePlane;
-        prizeTextures.load(toy.imageData, texture => {
-          texture.colorSpace = THREE.SRGBColorSpace;
-          texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-          const imageAspect = texture.image.width / texture.image.height;
-          const boxAspect = plane.geometry.parameters.width / plane.geometry.parameters.height;
-          if (imageAspect > boxAspect) plane.scale.y = boxAspect / imageAspect;
-          else plane.scale.x = imageAspect / boxAspect;
-          plane.material.map = texture;
-          plane.material.color.set('#ffffff');
-          plane.material.needsUpdate = true;
-        }, undefined, error => console.warn('獎品圖片無法載入', toy.name, error));
-      }
       object.scale.setScalar(mode === 'balls' ? 0.82 + toy.size * 0.12 : 0.72 + toy.size * 0.12);
       object.rotation.y = toy.rotation || (i * 1.7);
       prizeRoot.add(object);
@@ -394,6 +381,9 @@ try {
     targetCore.position.z = targetZ;
     const pulse = 1 + Math.sin(state.now * 0.005) * 0.045;
     targetRing.scale.setScalar(pulse);
+    const clawY = Math.max(1.18, state.cy * 0.96 + 0.68);
+    // Keep the capsule centered between the three tips, below the claw head.
+    const carriedBallY = clawY - 1.22;
     state.toys.forEach((toy, i) => {
       const object = prizeMeshes[i];
       const floorY = 0.25 + Math.max(0, toy.y - 0.56) * 1.15;
@@ -404,17 +394,18 @@ try {
         const elapsed = (state.now - state.anim.started) / 1000;
         if (elapsed > 1.44 && elapsed < 3.25) {
           const grabX = state.cx * 1.65, grabZ = state.cz * 1.5;
-          if (elapsed < 2.92) object.position.set(grabX, Math.max(0.6, state.cy * 0.95 + 0.55), grabZ);
+          if (elapsed < 2.92) object.position.set(grabX, carriedBallY, grabZ);
           else {
             const t = smooth(Math.min(1, (elapsed - 2.92) / 0.33));
-            object.position.set(THREE.MathUtils.lerp(grabX, -2.03, t), THREE.MathUtils.lerp(state.cy * 0.95 + 0.55, 0.48, t), THREE.MathUtils.lerp(grabZ, 1.62, t));
+            const bounce = Math.sin(t * Math.PI) * 0.1;
+            object.position.set(THREE.MathUtils.lerp(grabX, -2.03, t), THREE.MathUtils.lerp(carriedBallY, 0.48, t) + bounce, THREE.MathUtils.lerp(grabZ, 1.62, t));
+            object.rotation.z += Math.sin(state.now * 0.025) * 0.004;
           }
         } else if (elapsed >= 3.25) object.visible = false;
       }
     });
     trolley.position.x = targetX;
   trolley.position.z = targetZ;
-    const clawY = Math.max(1.18, state.cy * 0.96 + 0.68);
     const elapsed = state.anim ? (state.now - state.anim.started) / 1000 : -1;
     const shaking = elapsed > 0.6 && elapsed < 1.75;
     const sway = shaking ? Math.sin(elapsed * 24) * 0.055 : 0;
@@ -424,7 +415,7 @@ try {
     cable.scale.y = cableLength;
     cable.position.set(0, (4.0 + clawY) / 2, 0);
     // Game state uses 1 = open and 0 = closed; preserve a visible aperture.
-    const spread = 0.58 + Math.max(0, Math.min(1, state.grip)) * 0.42;
+    const spread = 0.38 + Math.max(0, Math.min(1, state.grip)) * 0.84;
     armRoot.scale.set(spread, 1, spread);
     if (cameraTween) {
       controls.enabled = false;
@@ -452,6 +443,7 @@ try {
     setView,
     getViewSnapshot() { return { camera: camera.position.toArray(), target: controls.target.toArray(), transitioning: !!cameraTween, visiblePrizes: prizeMeshes.filter(mesh => mesh.visible).length, imagePrizes: prizeMeshes.filter(mesh => mesh.userData.hasUploadedImage).length, loadedImages: prizeMeshes.filter(mesh => mesh.userData.imagePlane?.material?.map).length, threeDimensionalImagePrizes: prizeMeshes.filter(mesh => mesh.userData.isThreeDimensional).length }; },
     getClawSnapshot() { return { y: clawHead.position.y, x: clawHead.position.x, open: armRoot.scale.x }; },
+    getPrizeSnapshot(index) { return prizeMeshes[index]?.position.toArray() || null; },
     getCameraPosition() { return camera.position.toArray(); },
     getAngle() { return Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z); },
     update(state) { lastState = state; }
