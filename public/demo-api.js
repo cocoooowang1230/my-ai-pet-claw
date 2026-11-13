@@ -77,7 +77,10 @@
   const now = () => new Date().toISOString();
 
   async function route(url, init = {}) {
-    const path = new URL(typeof url === 'string' ? url : url.url, location.href).pathname;
+    const href = typeof url === 'string' ? url : url.url;
+    const path = location.protocol === 'file:' && href.startsWith('/api/')
+      ? new URL(href, 'https://petclaw-demo.invalid').pathname
+      : new URL(href, location.href).pathname;
     const method = (init.method || 'GET').toUpperCase();
     let body = {};
     try { body = init.body ? JSON.parse(init.body) : {}; } catch { return error('格式錯誤。'); }
@@ -217,7 +220,7 @@
   window.__petclawDemo = true;
   window.fetch = function (input, init) {
     const href = typeof input === 'string' ? input : input.url;
-    if (new URL(href, location.href).pathname.startsWith('/api/')) return route(input, init);
+    if ((location.protocol === 'file:' && href.startsWith('/api/')) || new URL(href, location.href).pathname.startsWith('/api/')) return route(input, init);
     return originalFetch(input, init);
   };
 
@@ -229,7 +232,7 @@
         note.innerHTML = '<b>展示後台</b><br>管理員帳號：<code>' + ADMIN.email + '</code><br>密碼：<code>' + ADMIN.password + '</code><br>資料只存在此瀏覽器，請勿輸入真實資料。<br>點「重設演示資料」可還原範例。';
         login.prepend(note);
         const homeLink = document.querySelector('header.top a[aria-label="回到遊戲"]');
-        if (homeLink) homeLink.href = basePath + '/?demo=1';
+        if (homeLink) homeLink.href = location.protocol === 'file:' ? './index.html' : basePath + '/?demo=1';
         const reset = document.createElement('button'); reset.textContent = '重設演示資料'; reset.style.marginTop = '10px';
         reset.onclick = () => { localStorage.removeItem(KEY); location.reload(); };
         login.append(reset);
@@ -244,7 +247,7 @@
         const note = document.createElement('p'); note.className = 'muted demo-note';
         note.innerHTML = '演示帳號：<code>' + PLAYER.email + '</code><br>密碼：<code>' + PLAYER.password + '</code><br>這是公開假資料，請勿輸入真實收件資訊。';
         accountForm.prepend(note);
-        const adminLink = document.querySelector('#modalContent a[href="/admin.html"]'); if (adminLink) adminLink.href = basePath + '/admin.html?demo=1';
+        const adminLink = document.querySelector('#modalContent a[href="/admin.html"]'); if (adminLink) adminLink.href = location.protocol === 'file:' ? './admin.html' : basePath + '/admin.html?demo=1';
       }
     }
   };
