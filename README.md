@@ -48,6 +48,16 @@ GitHub Pages 公開入口：https://cocoooowang1230.github.io/my-ai-pet-claw/?de
 - 管理後台：`/admin.html?demo=1`。測試帳號 `admin@demo.example.com`，密碼 `PetClawAdmin2026!`。
 - 演示模式不呼叫正式 API 或資料庫；每位訪客的狀態只存在自己的瀏覽器 `localStorage`，可在管理員登入畫面按「重設演示資料」還原（若已登入，先登出）。
 - 這是公開假資料，請勿輸入真實姓名、電話或地址。正式前後台仍需完成 Vercel PostgreSQL 與管理員環境變數設定，再從不帶 `?demo=1` 的網址登入。
+
+## Vercel 外部測試
+
+- 正式測試入口：https://my-ai-pet-claw.vercel.app/
+- 管理後台：https://my-ai-pet-claw.vercel.app/admin.html
+- 玩家使用說明：https://my-ai-pet-claw.vercel.app/guide.html
+- Vercel Production 與 Preview 已連接 Neon 免費方案 PostgreSQL；玩家帳戶、錢包、倉庫、獎品設定和配送申請會由伺服器保存，登入同一帳戶可跨裝置查看。
+- 正式測試請勿加上 `?demo=1`。那是每個瀏覽器各自保存的本機展示資料。
+- 新玩家註冊後餘額為 0；測試管理員需在後台為受邀測試者核發 RP 或 Credits。不要將管理員登入資料交給測試者。
+- 請測試者使用假資料，不要送出真實地址或電話。配送申請目前只建立待處理訂單，需人工處理，尚未串接物流商。
 ## API
 
 - `GET /api/state`：公開獎品與設定、登入者錢包和倉庫摘要。
