@@ -99,7 +99,7 @@
     if (path === '/api/play' && method === 'POST') {
       const denied = needUser(); if (denied) return denied;
       const currency = body.currency;
-      if (!['RP', 'Credits','SP'].includes(currency)) return error('請選擇 RP、Credits 或 SP。');
+      if (!['RP', 'Credits'].includes(currency)) return error('請選擇 RP 或 Credits。');
       const rule = data.config.currency[currency];
       const balanceKey = {RP:'rp',Credits:'credits',SP:'sp'}[currency];
       const progress = Number(data.wallet.progress[currency] || 0);
@@ -149,11 +149,19 @@
         warehouse: structuredClone(data.inventory),
         orders: structuredClone(data.orders).map(o => ({ id: o.id, status: o.status, created_at: o.created_at, recipient:o.recipient, phone:o.phone, address:o.address, email:o.email, inventory_ids:o.inventory_ids }))
       });
+      if (body.action === 'exchangeSP') {
+        const amount=Number(body.amount);
+        if(!Number.isSafeInteger(amount)||amount<1)return error('請輸入有效的 SP 數量。');
+        if(data.wallet.sp<amount)return error('SP 餘額不足。');
+        data.wallet.sp-=amount;data.wallet.rp+=amount;persist();
+        return result({ok:true,converted:amount,rp:data.wallet.rp,sp:data.wallet.sp});
+      }
       if (body.action === 'redeem') {
         const prize = data.prizes.find(p => p.id === body.prizeId && p.active && p.stock > 0 && ['physical','plush'].includes(p.kind));
         if (!prize) return error('商品目前無庫存。', 409);
-        const currency=body.currency||'RP',field={RP:'rp',Credits:'credits',SP:'sp'}[currency],price={RP:'price_rp',Credits:'price_credits',SP:'price_sp'}[currency];if(!field)return error('請選擇有效付款點數。');const cost=Number(prize[price]||0);
-        if (!cost || data.wallet[field] < cost) return error(`${currency} 餘額不足或商品價格尚未設定。`, 402);
+        const currency=body.currency||'RP',field={RP:'rp',Credits:'credits'}[currency],price={RP:'price_rp',Credits:'price_credits'}[currency];if(!field)return error('請選擇有效付款點數。');const cost=Number(prize[price]||0);
+        if (!cost) return error(`商品尚未設定 ${currency} 價格。`, 400);
+        if (data.wallet[field] < cost) return error(`${currency} 餘額不足。`, 402);
         data.wallet[field] -= cost; prize.stock--;
         const inventoryId=id();data.inventory.unshift({ id: inventoryId, name: prize.name, kind: prize.kind, prize_id: prize.id, status: 'stored', created_at: now(), recycle_rp: prize.recycle_rp, recycle_sp:prize.recycle_sp||0,recycle_credits:prize.recycle_credits||0, image_data:prize.image_data||'', recycleRP: prize.recycle_rp,recycleSP:prize.recycle_sp||0 });
         persist(); return result({ ok: true, inventoryId, prizeId:prize.id, name:prize.name, kind:prize.kind, image_data:prize.image_data||"", recycle_rp:Number(prize.recycle_rp)||0, recycle_sp:Number(prize.recycle_sp)||0, recycle_credits:Number(prize.recycle_credits)||0 });
@@ -161,7 +169,7 @@
       if (body.action === 'recycle') {
         const item = data.inventory.find(i => i.id === body.inventoryId && i.status === 'stored');
         if (!item) return error('找不到可回收的獎品。', 404);
-        const currency=body.currency||'RP',field={RP:'rp',Credits:'credits',SP:'sp'}[currency];if(!field)return error('請選擇 RP、Credits 或 SP。');const credited=Number(({RP:item.recycle_rp,Credits:item.recycle_credits,SP:item.recycle_sp})[currency]||0);if(credited<=0)return error('此獎品尚未設定此幣別回收點數。');item.status='recycled';data.wallet[field]+=credited;
+        const currency=body.currency||'RP',field={RP:'rp',Credits:'credits',SP:'sp'}[currency];if(!field)return error('請選擇 RP 或 Credits。');const credited=Number(({RP:item.recycle_rp,Credits:item.recycle_credits,SP:item.recycle_sp})[currency]||0);if(credited<=0)return error('此獎品尚未設定此幣別回收點數。');item.status='recycled';data.wallet[field]+=credited;
         persist(); return result({ ok: true, credited,currency });
       }
       if (body.action === 'ship') {
