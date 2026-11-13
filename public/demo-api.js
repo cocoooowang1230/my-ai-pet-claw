@@ -146,8 +146,8 @@
         const currency=body.currency||'RP',field={RP:'rp',Credits:'credits',SP:'sp'}[currency],price={RP:'price_rp',Credits:'price_credits',SP:'price_sp'}[currency];if(!field)return error('請選擇有效付款點數。');const cost=Number(prize[price]||0);
         if (!cost || data.wallet[field] < cost) return error(`${currency} 餘額不足或商品價格尚未設定。`, 402);
         data.wallet[field] -= cost; prize.stock--;
-        data.inventory.unshift({ id: id(), name: prize.name, kind: prize.kind, prize_id: prize.id, status: 'stored', created_at: now(), recycle_rp: prize.recycle_rp, recycle_sp:prize.recycle_sp||0,recycle_credits:prize.recycle_credits||0, image_data:prize.image_data||'', recycleRP: prize.recycle_rp,recycleSP:prize.recycle_sp||0 });
-        persist(); return result({ ok: true });
+        const inventoryId=id();data.inventory.unshift({ id: inventoryId, name: prize.name, kind: prize.kind, prize_id: prize.id, status: 'stored', created_at: now(), recycle_rp: prize.recycle_rp, recycle_sp:prize.recycle_sp||0,recycle_credits:prize.recycle_credits||0, image_data:prize.image_data||'', recycleRP: prize.recycle_rp,recycleSP:prize.recycle_sp||0 });
+        persist(); return result({ ok: true, inventoryId, prizeId:prize.id, name:prize.name });
       }
       if (body.action === 'recycle') {
         const item = data.inventory.find(i => i.id === body.inventoryId && i.status === 'stored');
