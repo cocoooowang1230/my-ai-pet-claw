@@ -1,6 +1,9 @@
 /* Public, disposable browser-only demo. Never uses the real API or database. */
 (function () {
-  if (new URLSearchParams(location.search).get('demo') !== '1') return;
+  // A local file preview has no server API. Automatically use the disposable
+  // browser demo so its purchase and warehouse flows share the same store.
+  const demoMode = new URLSearchParams(location.search).get('demo') === '1' || location.protocol === 'file:';
+  if (!demoMode) return;
 
   const basePath = location.pathname.replace(/\/(?:index\.html|admin\.html)?$/, '').replace(/\/$/, '');
   const KEY = 'petclaw-public-demo-v1';
@@ -36,12 +39,15 @@
     orders: [],
     playLog: []
   });
+  const memoryStore = new Map();
+  const storageGet = key => { try { return localStorage.getItem(key); } catch { return memoryStore.get(key) || null; } };
+  const storageSet = (key, value) => { try { localStorage.setItem(key, value); } catch { memoryStore.set(key, value); } };
   function read() {
-    try { const saved=JSON.parse(localStorage.getItem(KEY)||'{}'),base=fresh(),merged={...base,...saved};merged.config={...base.config,...(saved.config||{}),currency:{...base.config.currency,...(saved.config?.currency||{})}};merged.wallet={...base.wallet,...(saved.wallet||{}),progress:{...base.wallet.progress,...(saved.wallet?.progress||{})}};merged.prizes=(saved.prizes||base.prizes).map(p=>{const seed=base.prizes.find(x=>x.id===p.id)||{};return{...seed,recycle_sp:p.recycle_sp??seed.recycle_sp??0,recycle_credits:p.recycle_credits??seed.recycle_credits??0,price_credits:p.price_credits??seed.price_credits??0,price_sp:p.price_sp??seed.price_sp??0,pool_sp:p.pool_sp??seed.pool_sp??true,...p};});return merged; }
+    try { const saved=JSON.parse(storageGet(KEY)||'{}'),base=fresh(),merged={...base,...saved};merged.config={...base.config,...(saved.config||{}),currency:{...base.config.currency,...(saved.config?.currency||{})}};merged.wallet={...base.wallet,...(saved.wallet||{}),progress:{...base.wallet.progress,...(saved.wallet?.progress||{})}};merged.prizes=(saved.prizes||base.prizes).map(p=>{const seed=base.prizes.find(x=>x.id===p.id)||{};return{...seed,recycle_sp:p.recycle_sp??seed.recycle_sp??0,recycle_credits:p.recycle_credits??seed.recycle_credits??0,price_credits:p.price_credits??seed.price_credits??0,price_sp:p.price_sp??seed.price_sp??0,pool_sp:p.pool_sp??seed.pool_sp??true,...p};});return merged; }
     catch { return fresh(); }
   }
   let data = read();
-  const persist = () => localStorage.setItem(KEY, JSON.stringify(data));
+  const persist = () => storageSet(KEY, JSON.stringify(data));
   const result = (payload, status = 200) => new Response(JSON.stringify(payload), {
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8' }
@@ -220,7 +226,7 @@
       const login = document.querySelector('#login');
       if (login && !login.querySelector('.demo-note')) {
         const note = document.createElement('div'); note.className = 'note demo-note';
-        note.innerHTML = '<b>公開演示後台</b><br>管理員帳號：<code>' + ADMIN.email + '</code><br>密碼：<code>' + ADMIN.password + '</code><br>資料只存在此瀏覽器，請勿輸入真實資料。<br>點「重設演示資料」可還原範例。';
+        note.innerHTML = '<b>展示後台</b><br>管理員帳號：<code>' + ADMIN.email + '</code><br>密碼：<code>' + ADMIN.password + '</code><br>資料只存在此瀏覽器，請勿輸入真實資料。<br>點「重設演示資料」可還原範例。';
         login.prepend(note);
         const homeLink = document.querySelector('header.top a[aria-label="回到遊戲"]');
         if (homeLink) homeLink.href = basePath + '/?demo=1';
@@ -230,9 +236,9 @@
       }
     } else {
       const status = document.querySelector('#accountStatus');
-      if (status && !status.textContent.includes('演示模式')) status.textContent = '演示模式（僅此瀏覽器資料） · ' + status.textContent;
+      if (status && !status.textContent.includes('展示模式')) status.textContent = '展示模式（僅此瀏覽器資料） · ' + status.textContent;
       const demoNote = document.querySelector('.side-notes .demo-note');
-      if (demoNote) demoNote.innerHTML = '公開演示模式 · 資料只存在此瀏覽器。<br>請勿填寫真實收件資料。';
+      if (demoNote) demoNote.innerHTML = '展示模式 · 資料只存在此瀏覽器。<br>請勿填寫真實收件資料。';
       const accountForm = document.querySelector('#accountForm');
       if (accountForm && !accountForm.querySelector('.demo-note')) {
         const note = document.createElement('p'); note.className = 'muted demo-note';
