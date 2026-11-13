@@ -15,14 +15,15 @@
     passCredits: 150,
     goldTicketSP: 500,
     shippingEnabled: true,
+    shippingCountries: ['TW'],
     registrationEnabled: true
   };
   const DEFAULT_PRIZES = [
-    { id: 'demo-biscuit', name: 'MY AI PET Biscuit 玩偶', kind: 'plush', weight: 8, stock: 20, recycle_rp: 250, recycle_sp: 100, price_rp: 1200, price_credits: 60, price_sp: 900, sp_reward: 0, pool_rp: true, pool_credits: true, pool_sp: true, active: true, image_data: '', display_style: '3d' },
-    { id: 'demo-partner', name: '合作寵物吊飾', kind: 'physical', weight: 18, stock: 30, recycle_rp: 100, recycle_sp: 40, price_rp: 500, price_credits: 30, price_sp: 400, sp_reward: 0, pool_rp: true, pool_credits: true, pool_sp: true, active: true, image_data: '', display_style: '3d' },
+    { id: 'demo-biscuit', name: 'MY AI PET Biscuit 玩偶', kind: 'plush', weight: 8, stock: 20, recycle_rp: 250, recycle_sp: 100, recycle_credits: 50, price_rp: 1200, price_credits: 60, price_sp: 900, sp_reward: 0, pool_rp: true, pool_credits: true, pool_sp: true, active: true, image_data: '', display_style: '3d' },
+    { id: 'demo-partner', name: '合作寵物吊飾', kind: 'physical', weight: 18, stock: 30, recycle_rp: 100, recycle_sp: 40, recycle_credits: 20, price_rp: 500, price_credits: 30, price_sp: 400, sp_reward: 0, pool_rp: true, pool_credits: true, pool_sp: true, active: true, image_data: '', display_style: '3d' },
     { id: 'demo-ticket', name: '金色 Season Points 券', kind: 'ticket', weight: 2, stock: 50, recycle_rp: 0, price_rp: 0, sp_reward: 500, pool_rp: true, pool_credits: true, active: true, image_data: '', display_style: '3d' },
     { id: 'demo-capsule', name: '驚喜球', kind: 'capsule', weight: 12, stock: 50, recycle_rp: 150, price_rp: 800, sp_reward: 0, pool_rp: true, pool_credits: true, active: true, image_data: '', display_style: '3d' },
-    { id: 'demo-limited', name: '限定 MY AI PET 玩偶', kind: 'physical', weight: 1, stock: 5, recycle_rp: 1500, recycle_sp: 600, price_rp: 6000, price_credits: 300, price_sp: 5000, sp_reward: 0, pool_rp: false, pool_credits: true, pool_sp: false, active: true, image_data: '', display_style: '3d' }
+    { id: 'demo-limited', name: '限定 MY AI PET 玩偶', kind: 'physical', weight: 1, stock: 5, recycle_rp: 1500, recycle_sp: 600, recycle_credits: 300, price_rp: 6000, price_credits: 300, price_sp: 5000, sp_reward: 0, pool_rp: false, pool_credits: true, pool_sp: false, active: true, image_data: '', display_style: '3d' }
   ];
 
   const fresh = () => ({
@@ -36,7 +37,7 @@
     playLog: []
   });
   function read() {
-    try { const saved=JSON.parse(localStorage.getItem(KEY)||'{}'),base=fresh(),merged={...base,...saved};merged.config={...base.config,...(saved.config||{}),currency:{...base.config.currency,...(saved.config?.currency||{})}};merged.wallet={...base.wallet,...(saved.wallet||{}),progress:{...base.wallet.progress,...(saved.wallet?.progress||{})}};merged.prizes=(saved.prizes||base.prizes).map(p=>{const seed=base.prizes.find(x=>x.id===p.id)||{};return{...seed,recycle_sp:p.recycle_sp??seed.recycle_sp??0,price_credits:p.price_credits??seed.price_credits??0,price_sp:p.price_sp??seed.price_sp??0,pool_sp:p.pool_sp??seed.pool_sp??true,...p};});return merged; }
+    try { const saved=JSON.parse(localStorage.getItem(KEY)||'{}'),base=fresh(),merged={...base,...saved};merged.config={...base.config,...(saved.config||{}),currency:{...base.config.currency,...(saved.config?.currency||{})}};merged.wallet={...base.wallet,...(saved.wallet||{}),progress:{...base.wallet.progress,...(saved.wallet?.progress||{})}};merged.prizes=(saved.prizes||base.prizes).map(p=>{const seed=base.prizes.find(x=>x.id===p.id)||{};return{...seed,recycle_sp:p.recycle_sp??seed.recycle_sp??0,recycle_credits:p.recycle_credits??seed.recycle_credits??0,price_credits:p.price_credits??seed.price_credits??0,price_sp:p.price_sp??seed.price_sp??0,pool_sp:p.pool_sp??seed.pool_sp??true,...p};});return merged; }
     catch { return fresh(); }
   }
   let data = read();
@@ -55,10 +56,10 @@
       plays: data.plays,
       config: structuredClone(data.config),
       prizes: data.prizes.filter(p => p.active && p.kind !== 'capsule').map(p => ({
-        ...p, recycleRP: p.recycle_rp, recycleSP: p.recycle_sp, priceRP: p.price_rp, priceCredits:p.price_credits, priceSP:p.price_sp, spReward: p.sp_reward
+        ...p, recycleRP: p.recycle_rp, recycleSP: p.recycle_sp,recycleCredits:p.recycle_credits, priceRP: p.price_rp, priceCredits:p.price_credits, priceSP:p.price_sp, spReward: p.sp_reward
       })),
         inventory: data.inventory.filter(i => ['stored', 'shipping_requested', 'delivered'].includes(i.status)).map(i => ({
-        ...i, recycleRP: i.recycle_rp
+        ...i, recycleRP: i.recycle_rp,recycleCredits:i.recycle_credits
       }))
     };
   }
@@ -120,7 +121,7 @@
           const currency=prize.digital_currency||'SP',amount=Number(prize.digital_amount)||0;
           if(['SP','RP','Credits'].includes(currency)&&amount>0){const key={SP:'sp',RP:'rp',Credits:'credits'}[currency];data.wallet[key]+=amount;digitalAward={currency,amount};}
           else if(currency==='Coupon'){wonInventoryId=id();digitalAward={currency,amount:0,code:prize.digital_code||''};data.inventory.unshift({id:wonInventoryId,name:prize.name,kind:prize.kind,prize_id:prize.id,status:'delivered',created_at:now(),recycle_rp:prize.recycle_rp,digital_currency:currency,digital_amount:0,digital_code:prize.digital_code||'',image_data:prize.image_data||''});}
-        }else{wonInventoryId=id();data.inventory.unshift({id:wonInventoryId,name:prize.name,kind:prize.kind,prize_id:prize.id,status:'stored',created_at:now(),recycle_rp:prize.recycle_rp,recycleRP:prize.recycle_rp});}
+        }else{wonInventoryId=id();data.inventory.unshift({id:wonInventoryId,name:prize.name,kind:prize.kind,prize_id:prize.id,status:'stored',created_at:now(),recycle_rp:prize.recycle_rp,recycle_sp:prize.recycle_sp||0,recycle_credits:prize.recycle_credits||0,recycleRP:prize.recycle_rp});}
       }
       data.playLog.unshift({ id: id(), created_at: now(), email: data.user.email, currency, cost, strong: strongThisPlay, success: !!prize, prize_name: prize?.name || null });
       persist();
@@ -128,14 +129,14 @@
         success: !!prize,
         strong: strongThisPlay || data.wallet.progress[currency] >= Number(rule.threshold),
         charged: cost,
-        prize: prize ? { id: prize.id, inventoryId: wonInventoryId, name: prize.name, kind: prize.kind, spReward: Number(prize.sp_reward) || Number(data.config.goldTicketSP) || 0, digitalCurrency:prize.digital_currency||'SP',digitalAmount:Number(prize.digital_amount)||0,digitalCode:prize.digital_code||'',digitalAward,recycleRP: Number(prize.recycle_rp), image_data: prize.image_data || '', display_style: prize.display_style || '2d' } : null,
+        prize: prize ? { id: prize.id, inventoryId: wonInventoryId, name: prize.name, kind: prize.kind, spReward: Number(prize.sp_reward) || Number(data.config.goldTicketSP) || 0, digitalCurrency:prize.digital_currency||'SP',digitalAmount:Number(prize.digital_amount)||0,digitalCode:prize.digital_code||'',digitalAward,recycleRP: Number(prize.recycle_rp),recycleSP:Number(prize.recycle_sp)||0,recycleCredits:Number(prize.recycle_credits)||0, image_data: prize.image_data || '', display_style: prize.display_style || '2d' } : null,
         state: snapshot()
       });
     }
     if (path === '/api/rewards') {
       const denied = needUser(); if (denied) return denied;
       if (method === 'GET') return result({
-        shop: data.prizes.filter(p => p.active && ['physical','plush'].includes(p.kind)).map(p => ({ ...p, id: p.id, name: p.name, kind: p.kind, stock: p.stock, recycle_rp: p.recycle_rp, recycle_sp:p.recycle_sp||0, price_rp: p.price_rp, price_credits:p.price_credits||0, price_sp:p.price_sp||0, pool_rp: p.pool_rp, pool_credits: p.pool_credits,pool_sp:p.pool_sp!==false })),
+        shop: data.prizes.filter(p => p.active && ['physical','plush'].includes(p.kind)).map(p => ({ ...p, id: p.id, name: p.name, kind: p.kind, stock: p.stock, recycle_rp: p.recycle_rp, recycle_sp:p.recycle_sp||0,recycle_credits:p.recycle_credits||0, price_rp: p.price_rp, price_credits:p.price_credits||0, price_sp:p.price_sp||0, pool_rp: p.pool_rp, pool_credits: p.pool_credits,pool_sp:p.pool_sp!==false })),
         warehouse: structuredClone(data.inventory),
         orders: structuredClone(data.orders).map(o => ({ id: o.id, status: o.status, created_at: o.created_at, recipient:o.recipient, phone:o.phone, address:o.address, email:o.email, inventory_ids:o.inventory_ids }))
       });
@@ -145,21 +146,21 @@
         const currency=body.currency||'RP',field={RP:'rp',Credits:'credits',SP:'sp'}[currency],price={RP:'price_rp',Credits:'price_credits',SP:'price_sp'}[currency];if(!field)return error('請選擇有效付款點數。');const cost=Number(prize[price]||0);
         if (!cost || data.wallet[field] < cost) return error(`${currency} 餘額不足或商品價格尚未設定。`, 402);
         data.wallet[field] -= cost; prize.stock--;
-        data.inventory.unshift({ id: id(), name: prize.name, kind: prize.kind, prize_id: prize.id, status: 'stored', created_at: now(), recycle_rp: prize.recycle_rp, recycle_sp:prize.recycle_sp||0, image_data:prize.image_data||'', recycleRP: prize.recycle_rp,recycleSP:prize.recycle_sp||0 });
+        data.inventory.unshift({ id: id(), name: prize.name, kind: prize.kind, prize_id: prize.id, status: 'stored', created_at: now(), recycle_rp: prize.recycle_rp, recycle_sp:prize.recycle_sp||0,recycle_credits:prize.recycle_credits||0, image_data:prize.image_data||'', recycleRP: prize.recycle_rp,recycleSP:prize.recycle_sp||0 });
         persist(); return result({ ok: true });
       }
       if (body.action === 'recycle') {
         const item = data.inventory.find(i => i.id === body.inventoryId && i.status === 'stored');
         if (!item) return error('找不到可回收的獎品。', 404);
-        const currency=body.currency||'RP',field={RP:'rp',SP:'sp'}[currency];if(!field)return error('獎品可回收成 RP 或 SP。');const credited=Number(currency==='RP'?item.recycle_rp:item.recycle_sp||0);item.status='recycled';data.wallet[field]+=credited;
+        const currency=body.currency||'RP',field={RP:'rp',Credits:'credits',SP:'sp'}[currency];if(!field)return error('請選擇 RP、Credits 或 SP。');const credited=Number(({RP:item.recycle_rp,Credits:item.recycle_credits,SP:item.recycle_sp})[currency]||0);if(credited<=0)return error('此獎品尚未設定此幣別回收點數。');item.status='recycled';data.wallet[field]+=credited;
         persist(); return result({ ok: true, credited,currency });
       }
       if (body.action === 'ship') {
-        if (data.config.shippingEnabled === false) return error('配送功能暫時關閉。', 403);
+        if (data.config.shippingEnabled === false) return error('配送功能暫時關閉。', 403);if(!(data.config.shippingCountries||['TW']).includes(String(body.country||'').toUpperCase()))return error('目前不配送至所選國家。請改選可配送國家，或將獎品回收成 RP、Credits 或 SP。',403);
         const ids = [...new Set(Array.isArray(body.inventoryIds) ? body.inventoryIds : [])];
         const items = data.inventory.filter(i => ids.includes(i.id) && i.status === 'stored' && ['physical','plush'].includes(i.kind));
         if (!ids.length || items.length !== ids.length) return error('請選擇可寄送的獎品。', 409);
-        const order = { id: id(), user_id: data.user.id, email: data.user.email, inventory_ids: ids, recipient: String(body.recipient || ''), phone: String(body.phone || ''), address: String(body.address || ''), contact_email:String(body.email||''), status: 'requested', created_at: now() };
+        const order = { id: id(), user_id: data.user.id, email: data.user.email, inventory_ids: ids, recipient: String(body.recipient || ''), phone: String(body.phone || ''), address: String(body.address || ''), country:String(body.country||'').toUpperCase(), destination_country:String(body.country||'').toUpperCase(), contact_email:String(body.email||''), status: 'requested', created_at: now() };
         if (!order.recipient || !order.phone || !order.address || !/^\S+@\S+\.\S+$/.test(order.contact_email)) return error('請填寫有效的收件人、電話、Email 與地址。');
         items.forEach(i => { i.status = 'shipping_requested'; }); data.orders.unshift(order); persist();
         return result({ ok: true, orderId: order.id });
@@ -188,7 +189,7 @@
         if (p.kind==='digital'&&p.digitalCurrency==='Coupon'&&!String(p.digitalCode||'').trim()) return error('數位折價券請填寫折價碼或兌換代碼。');
         if (p.kind==='digital'&&p.digitalCurrency!=='Coupon'&&Number(p.digitalAmount)<1) return error('數位點數獎品數量至少為 1。');
         if (!['2d','3d'].includes(displayStyle)) return error('獎品呈現方式無效。');
-        const item = { id: p.id || id(), name: p.name, kind: p.kind, stock: Number(p.stock), weight: Number(p.weight), recycle_rp: Number(p.recycleRP),recycle_sp:Number(p.recycleSP)||0, price_rp: Number(p.priceRP),price_credits:Number(p.priceCredits)||0,price_sp:Number(p.priceSP)||0, sp_reward: Number(p.spReward), pool_rp: !!p.poolRP, pool_credits: !!p.poolCredits,pool_sp:!!p.poolSP, active: !!p.active, image_data: imageData, display_style: displayStyle,digital_currency:p.digitalCurrency||'SP',digital_amount:Number(p.digitalAmount)||0,digital_code:String(p.digitalCode||'') };
+        const item = { id: p.id || id(), name: p.name, kind: p.kind, stock: Number(p.stock), weight: Number(p.weight), recycle_rp: Number(p.recycleRP),recycle_sp:Number(p.recycleSP)||0,recycle_credits:Number(p.recycleCredits)||0, price_rp: Number(p.priceRP),price_credits:Number(p.priceCredits)||0,price_sp:Number(p.priceSP)||0, sp_reward: Number(p.spReward), pool_rp: !!p.poolRP, pool_credits: !!p.poolCredits,pool_sp:!!p.poolSP, active: !!p.active, image_data: imageData, display_style: displayStyle,digital_currency:p.digitalCurrency||'SP',digital_amount:Number(p.digitalAmount)||0,digital_code:String(p.digitalCode||'') };
         if (!item.name || !Number.isSafeInteger(item.stock) || item.stock < 0) return error('請輸入有效獎品名稱與庫存。');
         if (existing) Object.assign(existing, item); else data.prizes.unshift(item);
         persist(); return result({ ok: true, id: item.id });
